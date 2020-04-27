@@ -4,11 +4,11 @@ import (
 	"testing"
 )
 
-func TestApplicationInsightsID(t *testing.T) {
+func TestApplicationInsightsAnalyticsItemID(t *testing.T) {
 	testData := []struct {
 		Name     string
 		Input    string
-		Expected *ApplicationInsightsId
+		Expected *ApplicationInsightsAnalyticsItemId
 	}{
 		{
 			Name:     "Empty",
@@ -36,9 +36,19 @@ func TestApplicationInsightsID(t *testing.T) {
 			Expected: nil,
 		},
 		{
-			Name:  "App Configuration ID",
+			Name:     "Application Insights ID",
+			Input:    "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/resGroup1/providers/Microsoft.Insights/components/Component1",
+			Expected: nil,
+		},
+		{
+			Name:     "Missing Analytics Item Value",
+			Input:    "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/resGroup1/providers/Microsoft.Insights/components/",
+			Expected: nil,
+		},
+		{
+			Name:  "App Insights Analytics Item ID",
 			Input: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/resGroup1/providers/Microsoft.Insights/components/Component1",
-			Expected: &ApplicationInsightsId{
+			Expected: &ApplicationInsightsAnalyticsItemId{
 				Name:          "Component1",
 				ResourceGroup: "resGroup1",
 			},
@@ -53,7 +63,7 @@ func TestApplicationInsightsID(t *testing.T) {
 	for _, v := range testData {
 		t.Logf("[DEBUG] Testing %q", v.Name)
 
-		actual, err := ApplicationInsightsID(v.Input)
+		actual, err := ApplicationInsightsAnalyticsItemID(v.Input)
 		if err != nil {
 			if v.Expected == nil {
 				continue

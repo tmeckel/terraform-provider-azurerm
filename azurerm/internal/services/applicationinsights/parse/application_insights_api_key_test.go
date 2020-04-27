@@ -30,7 +30,8 @@ func TestApplicationInsightsApiKeyID(t *testing.T) {
 			Input:    "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/foo/",
 			Expected: nil,
 		},
-		{Name: "Missing Components Value",
+		{
+			Name:     "Missing Components Value",
 			Input:    "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/resGroup1/providers/Microsoft.Insights/components/",
 			Expected: nil,
 		},
