@@ -220,7 +220,6 @@ resource "azurerm_lb" "test" {
 
 resource "azurerm_lb_backend_address_pool" "test" {
   name                = "test"
-  location            = azurerm_resource_group.test.location
   resource_group_name = azurerm_resource_group.test.name
   loadbalancer_id     = azurerm_lb.test.id
 }
@@ -298,9 +297,9 @@ resource "azurerm_windows_virtual_machine_scale_set" "test" {
   }
 
   rolling_upgrade_policy {
-    max_batch_instance_percent              = 21
-    max_unhealthy_instance_percent          = 22
-    max_unhealthy_upgraded_instance_percent = 23
+    max_batch_instance_percent              = 100
+    max_unhealthy_instance_percent          = 100
+    max_unhealthy_upgraded_instance_percent = 100
     pause_time_between_batches              = "PT30S"
   }
 
@@ -572,7 +571,6 @@ resource "azurerm_lb" "test" {
 
 resource "azurerm_lb_backend_address_pool" "test" {
   name                = "test"
-  location            = azurerm_resource_group.test.location
   resource_group_name = azurerm_resource_group.test.name
   loadbalancer_id     = azurerm_lb.test.id
 }

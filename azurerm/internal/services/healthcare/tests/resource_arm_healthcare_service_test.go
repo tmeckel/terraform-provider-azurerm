@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/healthcare/parse"
 )
 
@@ -33,11 +32,6 @@ func TestAccAzureRMHealthCareService_basic(t *testing.T) {
 }
 
 func TestAccAzureRMHealthCareService_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_healthcare_service", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -135,7 +129,12 @@ func testAccAzureRMHealthCareService_basic(data acceptance.TestData) string {
 	location := "westus2"
 
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-health-%d"
@@ -144,14 +143,14 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_healthcare_service" "test" {
   name                = "testacc%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   access_policy_object_ids = [
-    "${data.azurerm_client_config.current.service_principal_object_id}",
+    data.azurerm_client_config.current.object_id,
   ]
 }
-`, data.RandomInteger, location, data.RandomIntOfLength(17)) //name can only be 24 chars long
+`, data.RandomInteger, location, data.RandomIntOfLength(17)) // name can only be 24 chars long
 }
 
 func testAccAzureRMHealthCareService_requiresImport(data acceptance.TestData) string {
@@ -165,7 +164,7 @@ resource "azurerm_healthcare_service" "import" {
   resource_group_name = azurerm_healthcare_service.test.resource_group_name
 
   access_policy_object_ids = [
-    "${data.azurerm_client_config.current.service_principal_object_id}",
+    "${data.azurerm_client_config.current.object_id}",
   ]
 }
 `, template)
@@ -176,7 +175,12 @@ func testAccAzureRMHealthCareService_complete(data acceptance.TestData) string {
 	location := "westus2"
 
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-health-%d"
@@ -185,8 +189,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_healthcare_service" "test" {
   name                = "testacc%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   tags = {
     environment = "production"
@@ -194,7 +198,7 @@ resource "azurerm_healthcare_service" "test" {
   }
 
   access_policy_object_ids = [
-    "${data.azurerm_client_config.current.service_principal_object_id}",
+    data.azurerm_client_config.current.object_id,
   ]
 
   authentication_configuration {
@@ -211,5 +215,5 @@ resource "azurerm_healthcare_service" "test" {
     allow_credentials  = true
   }
 }
-`, data.RandomInteger, location, data.RandomIntOfLength(17)) //name can only be 24 chars long
+`, data.RandomInteger, location, data.RandomIntOfLength(17)) // name can only be 24 chars long
 }

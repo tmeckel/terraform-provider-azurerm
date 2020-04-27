@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2019-12-01/apimanagement"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -37,10 +37,6 @@ func TestAccAzureRMApiManagementAPIPolicy_basic(t *testing.T) {
 }
 
 func TestAccAzureRMApiManagementAPIPolicy_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_api_management_api_policy", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -128,7 +124,7 @@ func testCheckAzureRMApiManagementAPIPolicyExists(resourceName string) resource.
 		serviceName := rs.Primary.Attributes["api_management_name"]
 		resourceGroup := rs.Primary.Attributes["resource_group_name"]
 
-		resp, err := conn.Get(ctx, resourceGroup, serviceName, apiName)
+		resp, err := conn.Get(ctx, resourceGroup, serviceName, apiName, apimanagement.PolicyExportFormatXML)
 		if err != nil {
 			if utils.ResponseWasNotFound(resp.Response) {
 				return fmt.Errorf("Bad: API Policy (API Management Service %q / API %q/  Resource Group %q) does not exist", serviceName, apiName, resourceGroup)
@@ -154,7 +150,7 @@ func testCheckAzureRMApiManagementAPIPolicyDestroy(s *terraform.State) error {
 		serviceName := rs.Primary.Attributes["api_management_name"]
 		resourceGroup := rs.Primary.Attributes["resource_group_name"]
 
-		resp, err := conn.Get(ctx, resourceGroup, serviceName, apiName)
+		resp, err := conn.Get(ctx, resourceGroup, serviceName, apiName, apimanagement.PolicyExportFormatXML)
 		if err != nil {
 			if utils.ResponseWasNotFound(resp.Response) {
 				return nil
@@ -171,6 +167,10 @@ func testCheckAzureRMApiManagementAPIPolicyDestroy(s *terraform.State) error {
 
 func testAccAzureRMApiManagementAPIPolicy_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -178,21 +178,17 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_api_management" "test" {
   name                = "acctestAM-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   publisher_name      = "pub1"
   publisher_email     = "pub1@email.com"
-
-  sku {
-    name     = "Developer"
-    capacity = 1
-  }
+  sku_name            = "Developer_1"
 }
 
 resource "azurerm_api_management_api" "test" {
   name                = "acctestapi-%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  api_management_name = azurerm_api_management.test.name
   display_name        = "api1"
   path                = "api1"
   protocols           = ["https"]
@@ -200,9 +196,9 @@ resource "azurerm_api_management_api" "test" {
 }
 
 resource "azurerm_api_management_api_policy" "test" {
-  api_name            = "${azurerm_api_management_api.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  api_name            = azurerm_api_management_api.test.name
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
   xml_link            = "https://gist.githubusercontent.com/riordanp/ca22f8113afae0eb38cc12d718fd048d/raw/d6ac89a2f35a6881a7729f8cb4883179dc88eea1/example.xml"
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger)
@@ -214,16 +210,20 @@ func testAccAzureRMApiManagementAPIPolicy_requiresImport(data acceptance.TestDat
 %s
 
 resource "azurerm_api_management_api_policy" "import" {
-  api_name            = "${azurerm_api_management_api_policy.test.api_name}"
-  api_management_name = "${azurerm_api_management_api_policy.test.api_management_name}"
-  resource_group_name = "${azurerm_api_management_api_policy.test.resource_group_name}"
-  xml_link            = "${azurerm_api_management_api_policy.test.xml_link}"
+  api_name            = azurerm_api_management_api_policy.test.api_name
+  api_management_name = azurerm_api_management_api_policy.test.api_management_name
+  resource_group_name = azurerm_api_management_api_policy.test.resource_group_name
+  xml_link            = azurerm_api_management_api_policy.test.xml_link
 }
 `, template)
 }
 
 func testAccAzureRMApiManagementAPIPolicy_customPolicy(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -231,21 +231,17 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_api_management" "test" {
   name                = "acctestAM-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   publisher_name      = "pub1"
   publisher_email     = "pub1@email.com"
-
-  sku {
-    name     = "Developer"
-    capacity = 1
-  }
+  sku_name            = "Developer_1"
 }
 
 resource "azurerm_api_management_api" "test" {
   name                = "acctestapi-%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  api_management_name = azurerm_api_management.test.name
   display_name        = "api1"
   path                = "api1"
   protocols           = ["https"]
@@ -253,9 +249,9 @@ resource "azurerm_api_management_api" "test" {
 }
 
 resource "azurerm_api_management_api_policy" "test" {
-  api_name            = "${azurerm_api_management_api.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  api_name            = azurerm_api_management_api.test.name
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
 
   xml_content = <<XML
 <policies>
@@ -265,6 +261,7 @@ resource "azurerm_api_management_api_policy" "test" {
   </inbound>
 </policies>
 XML
+
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger)
 }

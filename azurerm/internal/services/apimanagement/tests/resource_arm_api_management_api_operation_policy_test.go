@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2019-12-01/apimanagement"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -37,10 +37,6 @@ func TestAccAzureRMApiManagementAPIOperationPolicy_basic(t *testing.T) {
 }
 
 func TestAccAzureRMApiManagementAPIOperationPolicy_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_api_management_api_operation_policy", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -105,7 +101,7 @@ func testCheckAzureRMApiManagementAPIOperationPolicyExists(resourceName string) 
 		resourceGroup := rs.Primary.Attributes["resource_group_name"]
 		operationID := rs.Primary.Attributes["operation_id"]
 
-		resp, err := conn.Get(ctx, resourceGroup, serviceName, apiName, operationID)
+		resp, err := conn.Get(ctx, resourceGroup, serviceName, apiName, operationID, apimanagement.PolicyExportFormatXML)
 		if err != nil {
 			if utils.ResponseWasNotFound(resp.Response) {
 				return fmt.Errorf("Bad: API Policy (API Management Service %q / API %q / Operation %q / Resource Group %q) does not exist", serviceName, apiName, operationID, resourceGroup)
@@ -132,7 +128,7 @@ func testCheckAzureRMApiManagementAPIOperationPolicyDestroy(s *terraform.State) 
 		resourceGroup := rs.Primary.Attributes["resource_group_name"]
 		operationID := rs.Primary.Attributes["operation_id"]
 
-		resp, err := conn.Get(ctx, resourceGroup, serviceName, apiName, operationID)
+		resp, err := conn.Get(ctx, resourceGroup, serviceName, apiName, operationID, apimanagement.PolicyExportFormatXML)
 		if err != nil {
 			if utils.ResponseWasNotFound(resp.Response) {
 				return nil
@@ -154,10 +150,10 @@ func testAccAzureRMApiManagementAPIOperationPolicy_basic(data acceptance.TestDat
 %s
 
 resource "azurerm_api_management_api_operation_policy" "test" {
-  api_name            = "${azurerm_api_management_api.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  operation_id        = "${azurerm_api_management_api_operation.test.operation_id}"
+  api_name            = azurerm_api_management_api.test.name
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
+  operation_id        = azurerm_api_management_api_operation.test.operation_id
   xml_link            = "https://gist.githubusercontent.com/riordanp/ca22f8113afae0eb38cc12d718fd048d/raw/d6ac89a2f35a6881a7729f8cb4883179dc88eea1/example.xml"
 }
 `, template)
@@ -169,11 +165,11 @@ func testAccAzureRMApiManagementAPIOperationPolicy_requiresImport(data acceptanc
 %s
 
 resource "azurerm_api_management_api_operation_policy" "import" {
-  api_name            = "${azurerm_api_management_api_policy.test.api_name}"
-  api_management_name = "${azurerm_api_management_api_policy.test.api_management_name}"
-  resource_group_name = "${azurerm_api_management_api_policy.test.resource_group_name}"
-  operation_id        = "${azurerm_api_management_api_operation.test.operation_id}"
-  xml_link            = "${azurerm_api_management_api_policy.test.xml_link}"
+  api_name            = azurerm_api_management_api_policy.test.api_name
+  api_management_name = azurerm_api_management_api_policy.test.api_management_name
+  resource_group_name = azurerm_api_management_api_policy.test.resource_group_name
+  operation_id        = azurerm_api_management_api_operation.test.operation_id
+  xml_link            = azurerm_api_management_api_policy.test.xml_link
 }
 `, template)
 }
@@ -184,10 +180,10 @@ func testAccAzureRMApiManagementAPIOperationPolicy_updated(data acceptance.TestD
 %s
 
 resource "azurerm_api_management_api_operation_policy" "test" {
-  api_name            = "${azurerm_api_management_api.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  operation_id        = "${azurerm_api_management_api_operation.test.operation_id}"
+  api_name            = azurerm_api_management_api.test.name
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
+  operation_id        = azurerm_api_management_api_operation.test.operation_id
 
   xml_content = <<XML
 <policies>
@@ -197,6 +193,7 @@ resource "azurerm_api_management_api_operation_policy" "test" {
   </inbound>
 </policies>
 XML
+
 }
 `, template)
 }

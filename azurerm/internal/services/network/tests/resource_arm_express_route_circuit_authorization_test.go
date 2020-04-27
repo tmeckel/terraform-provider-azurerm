@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -34,11 +33,6 @@ func testAccAzureRMExpressRouteCircuitAuthorization_basic(t *testing.T) {
 }
 
 func testAccAzureRMExpressRouteCircuitAuthorization_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_express_route_circuit_authorization", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -142,6 +136,10 @@ func testCheckAzureRMExpressRouteCircuitAuthorizationDestroy(s *terraform.State)
 
 func testAccAzureRMExpressRouteCircuitAuthorization_basicConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -149,8 +147,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_express_route_circuit" "test" {
   name                  = "acctest-erc-%d"
-  location              = "${azurerm_resource_group.test.location}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  location              = azurerm_resource_group.test.location
+  resource_group_name   = azurerm_resource_group.test.name
   service_provider_name = "Equinix"
   peering_location      = "Silicon Valley"
   bandwidth_in_mbps     = 50
@@ -170,8 +168,8 @@ resource "azurerm_express_route_circuit" "test" {
 
 resource "azurerm_express_route_circuit_authorization" "test" {
   name                       = "acctestauth%d"
-  express_route_circuit_name = "${azurerm_express_route_circuit.test.name}"
-  resource_group_name        = "${azurerm_resource_group.test.name}"
+  express_route_circuit_name = azurerm_express_route_circuit.test.name
+  resource_group_name        = azurerm_resource_group.test.name
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger)
 }
@@ -182,15 +180,19 @@ func testAccAzureRMExpressRouteCircuitAuthorization_requiresImportConfig(data ac
 %s
 
 resource "azurerm_express_route_circuit_authorization" "import" {
-  name                       = "${azurerm_express_route_circuit_authorization.test.name}"
-  express_route_circuit_name = "${azurerm_express_route_circuit_authorization.test.express_route_circuit_name}"
-  resource_group_name        = "${azurerm_express_route_circuit_authorization.test.resource_group_name}"
+  name                       = azurerm_express_route_circuit_authorization.test.name
+  express_route_circuit_name = azurerm_express_route_circuit_authorization.test.express_route_circuit_name
+  resource_group_name        = azurerm_express_route_circuit_authorization.test.resource_group_name
 }
 `, template)
 }
 
 func testAccAzureRMExpressRouteCircuitAuthorization_multipleConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -198,8 +200,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_express_route_circuit" "test" {
   name                  = "acctest-erc-%d"
-  location              = "${azurerm_resource_group.test.location}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  location              = azurerm_resource_group.test.location
+  resource_group_name   = azurerm_resource_group.test.name
   service_provider_name = "Equinix"
   peering_location      = "Silicon Valley"
   bandwidth_in_mbps     = 50
@@ -219,14 +221,14 @@ resource "azurerm_express_route_circuit" "test" {
 
 resource "azurerm_express_route_circuit_authorization" "test1" {
   name                       = "acctestauth1%d"
-  express_route_circuit_name = "${azurerm_express_route_circuit.test.name}"
-  resource_group_name        = "${azurerm_resource_group.test.name}"
+  express_route_circuit_name = azurerm_express_route_circuit.test.name
+  resource_group_name        = azurerm_resource_group.test.name
 }
 
 resource "azurerm_express_route_circuit_authorization" "test2" {
   name                       = "acctestauth2%d"
-  express_route_circuit_name = "${azurerm_express_route_circuit.test.name}"
-  resource_group_name        = "${azurerm_resource_group.test.name}"
+  express_route_circuit_name = azurerm_express_route_circuit.test.name
+  resource_group_name        = azurerm_resource_group.test.name
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger)
 }

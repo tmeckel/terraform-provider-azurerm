@@ -10,7 +10,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -74,10 +73,6 @@ func TestAccAzureRMAutomationJobSchedule_update(t *testing.T) {
 }
 
 func TestAccAzureRMAutomationJobSchedule_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_automation_job_schedule", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -112,7 +107,7 @@ func testCheckAzureRMAutomationJobScheduleDestroy(s *terraform.State) error {
 		}
 		jobScheduleID := id.Path["jobSchedules"]
 		jobScheduleUUID := uuid.FromStringOrNil(jobScheduleID)
-		accName := rs.Primary.Attributes["account_name"]
+		accName := rs.Primary.Attributes["automation_account_name"]
 
 		resourceGroup, hasResourceGroup := rs.Primary.Attributes["resource_group_name"]
 		if !hasResourceGroup {
@@ -174,6 +169,10 @@ func testCheckAzureRMAutomationJobScheduleExists(resourceName string) resource.T
 
 func testAccAzureRMAutomationJobSchedulePrerequisites(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -181,24 +180,20 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_automation_account" "test" {
   name                = "acctestAA-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-
-  sku {
-    name = "Basic"
-  }
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  sku_name            = "Basic"
 }
 
 resource "azurerm_automation_runbook" "test" {
-  name                = "Output-HelloWorld"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-
-  account_name = "${azurerm_automation_account.test.name}"
-  log_verbose  = "true"
-  log_progress = "true"
-  description  = "This is a test runbook for terraform acceptance test"
-  runbook_type = "PowerShell"
+  name                    = "Output-HelloWorld"
+  location                = azurerm_resource_group.test.location
+  resource_group_name     = azurerm_resource_group.test.name
+  automation_account_name = azurerm_automation_account.test.name
+  log_verbose             = "true"
+  log_progress            = "true"
+  description             = "This is a test runbook for terraform acceptance test"
+  runbook_type            = "PowerShell"
 
   publish_content_link {
     uri = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/c4935ffb69246a6058eb24f54640f53f69d3ac9f/101-automation-runbook-getvms/Runbooks/Get-AzureVMTutorial.ps1"
@@ -218,12 +213,13 @@ resource "azurerm_automation_runbook" "test" {
   )
   "Hello, " + $Output + "!"
 EOF
+
 }
 
 resource "azurerm_automation_schedule" "test" {
   name                    = "acctestAS-%d"
-  resource_group_name     = "${azurerm_resource_group.test.name}"
-  automation_account_name = "${azurerm_automation_account.test.name}"
+  resource_group_name     = azurerm_resource_group.test.name
+  automation_account_name = azurerm_automation_account.test.name
   frequency               = "OneTime"
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger)
@@ -235,10 +231,10 @@ func testAccAzureRMAutomationJobSchedule_basic(data acceptance.TestData) string 
 %s
 
 resource "azurerm_automation_job_schedule" "test" {
-  resource_group_name     = "${azurerm_resource_group.test.name}"
-  automation_account_name = "${azurerm_automation_account.test.name}"
-  schedule_name           = "${azurerm_automation_schedule.test.name}"
-  runbook_name            = "${azurerm_automation_runbook.test.name}"
+  resource_group_name     = azurerm_resource_group.test.name
+  automation_account_name = azurerm_automation_account.test.name
+  schedule_name           = azurerm_automation_schedule.test.name
+  runbook_name            = azurerm_automation_runbook.test.name
 }
 `, template)
 }
@@ -260,10 +256,10 @@ func testAccAzureRMAutomationJobSchedule_complete(data acceptance.TestData) stri
 %s
 
 resource "azurerm_automation_job_schedule" "test" {
-  resource_group_name     = "${azurerm_resource_group.test.name}"
-  automation_account_name = "${azurerm_automation_account.test.name}"
-  schedule_name           = "${azurerm_automation_schedule.test.name}"
-  runbook_name            = "${azurerm_automation_runbook.test.name}"
+  resource_group_name     = azurerm_resource_group.test.name
+  automation_account_name = azurerm_automation_account.test.name
+  schedule_name           = azurerm_automation_schedule.test.name
+  runbook_name            = azurerm_automation_runbook.test.name
 
   parameters = {
     output     = "Earth"
@@ -299,10 +295,11 @@ func testAccAzureRMAutomationJobSchedule_requiresImport(data acceptance.TestData
 %s
 
 resource "azurerm_automation_job_schedule" "import" {
-  resource_group_name     = "${azurerm_automation_job_schedule.test.resource_group_name}"
-  automation_account_name = "${azurerm_automation_job_schedule.test.automation_account_name}"
-  schedule_name           = "${azurerm_automation_job_schedule.test.schedule_name}"
-  runbook_name            = "${azurerm_automation_job_schedule.test.runbook_name}"
+  resource_group_name     = azurerm_automation_job_schedule.test.resource_group_name
+  automation_account_name = azurerm_automation_job_schedule.test.automation_account_name
+  schedule_name           = azurerm_automation_job_schedule.test.schedule_name
+  runbook_name            = azurerm_automation_job_schedule.test.runbook_name
+  job_schedule_id         = azurerm_automation_job_schedule.test.job_schedule_id
 }
 `, template)
 }

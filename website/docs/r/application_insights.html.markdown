@@ -20,7 +20,7 @@ resource "azurerm_resource_group" "example" {
 
 resource "azurerm_application_insights" "example" {
   name                = "tf-test-appinsights"
-  location            = "West Europe"
+  location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
   application_type    = "web"
 }
@@ -56,6 +56,8 @@ The following arguments are supported:
 
 * `sampling_percentage` - (Optional) Specifies the percentage of the data produced by the monitored application that is sampled for Application Insights telemetry.
 
+* `disable_ip_masking` - (Optional) By default the real client ip is masked as `0.0.0.0` in the logs. Use this argument to disable masking and log the real client ip. Defaults to `false`.
+
 * `tags` - (Optional) A mapping of tags to assign to the resource.
 
 ## Attributes Reference
@@ -68,9 +70,7 @@ The following attributes are exported:
 
 * `instrumentation_key` - The Instrumentation Key for this Application Insights component.
 
-### Timeouts
-
-~> **Note:** Custom Timeouts are available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+## Timeouts
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 

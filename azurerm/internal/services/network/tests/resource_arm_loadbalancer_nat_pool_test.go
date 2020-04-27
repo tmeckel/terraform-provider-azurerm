@@ -11,7 +11,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	nw "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/network"
 )
 
@@ -44,19 +43,12 @@ func TestAccAzureRMLoadBalancerNatPool_basic(t *testing.T) {
 				ResourceName:      "azurerm_lb.test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// location is deprecated and was never actually used
-				ImportStateVerifyIgnore: []string{"location"},
 			},
 		},
 	})
 }
 
 func TestAccAzureRMLoadBalancerNatPool_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_lb_nat_pool", "test")
 
 	var lb network.LoadBalancer
@@ -234,6 +226,10 @@ func testCheckAzureRMLoadBalancerNatPoolDisappears(natPoolName string, lb *netwo
 
 func testAccAzureRMLoadBalancerNatPool_basic(data acceptance.TestData, natPoolName string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -241,26 +237,25 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_public_ip" "test" {
   name                = "test-ip-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Static"
 }
 
 resource "azurerm_lb" "test" {
   name                = "arm-test-loadbalancer-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   frontend_ip_configuration {
     name                 = "one-%d"
-    public_ip_address_id = "${azurerm_public_ip.test.id}"
+    public_ip_address_id = azurerm_public_ip.test.id
   }
 }
 
 resource "azurerm_lb_nat_pool" "test" {
-  location                       = "${azurerm_resource_group.test.location}"
-  resource_group_name            = "${azurerm_resource_group.test.name}"
-  loadbalancer_id                = "${azurerm_lb.test.id}"
+  resource_group_name            = azurerm_resource_group.test.name
+  loadbalancer_id                = azurerm_lb.test.id
   name                           = "%s"
   protocol                       = "Tcp"
   frontend_port_start            = 80
@@ -277,11 +272,10 @@ func testAccAzureRMLoadBalancerNatPool_requiresImport(data acceptance.TestData, 
 %s
 
 resource "azurerm_lb_nat_pool" "import" {
-  name                           = "${azurerm_lb_nat_pool.test.name}"
-  loadbalancer_id                = "${azurerm_lb_nat_pool.test.loadbalancer_id}"
-  location                       = "${azurerm_lb_nat_pool.test.location}"
-  resource_group_name            = "${azurerm_lb_nat_pool.test.resource_group_name}"
-  frontend_ip_configuration_name = "${azurerm_lb_nat_pool.test.frontend_ip_configuration_name}"
+  name                           = azurerm_lb_nat_pool.test.name
+  loadbalancer_id                = azurerm_lb_nat_pool.test.loadbalancer_id
+  resource_group_name            = azurerm_lb_nat_pool.test.resource_group_name
+  frontend_ip_configuration_name = azurerm_lb_nat_pool.test.frontend_ip_configuration_name
   protocol                       = "Tcp"
   frontend_port_start            = 80
   frontend_port_end              = 81
@@ -292,6 +286,10 @@ resource "azurerm_lb_nat_pool" "import" {
 
 func testAccAzureRMLoadBalancerNatPool_removal(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -299,19 +297,19 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_public_ip" "test" {
   name                = "test-ip-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Static"
 }
 
 resource "azurerm_lb" "test" {
   name                = "arm-test-loadbalancer-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   frontend_ip_configuration {
     name                 = "one-%d"
-    public_ip_address_id = "${azurerm_public_ip.test.id}"
+    public_ip_address_id = azurerm_public_ip.test.id
   }
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger)
@@ -319,6 +317,10 @@ resource "azurerm_lb" "test" {
 
 func testAccAzureRMLoadBalancerNatPool_multiplePools(data acceptance.TestData, natPoolName, natPool2Name string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -326,27 +328,26 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_public_ip" "test" {
   name                = "test-ip-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   allocation_method = "Static"
 }
 
 resource "azurerm_lb" "test" {
   name                = "arm-test-loadbalancer-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   frontend_ip_configuration {
     name                 = "one-%d"
-    public_ip_address_id = "${azurerm_public_ip.test.id}"
+    public_ip_address_id = azurerm_public_ip.test.id
   }
 }
 
 resource "azurerm_lb_nat_pool" "test" {
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  loadbalancer_id     = "${azurerm_lb.test.id}"
+  resource_group_name = azurerm_resource_group.test.name
+  loadbalancer_id     = azurerm_lb.test.id
   name                = "%s"
   protocol            = "Tcp"
   frontend_port_start = 80
@@ -357,9 +358,8 @@ resource "azurerm_lb_nat_pool" "test" {
 }
 
 resource "azurerm_lb_nat_pool" "test2" {
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  loadbalancer_id     = "${azurerm_lb.test.id}"
+  resource_group_name = azurerm_resource_group.test.name
+  loadbalancer_id     = azurerm_lb.test.id
   name                = "%s"
   protocol            = "Tcp"
   frontend_port_start = 82
@@ -373,6 +373,10 @@ resource "azurerm_lb_nat_pool" "test2" {
 
 func testAccAzureRMLoadBalancerNatPool_multiplePoolsUpdate(data acceptance.TestData, natPoolName, natPool2Name string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -380,26 +384,25 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_public_ip" "test" {
   name                = "test-ip-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Static"
 }
 
 resource "azurerm_lb" "test" {
   name                = "arm-test-loadbalancer-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   frontend_ip_configuration {
     name                 = "one-%d"
-    public_ip_address_id = "${azurerm_public_ip.test.id}"
+    public_ip_address_id = azurerm_public_ip.test.id
   }
 }
 
 resource "azurerm_lb_nat_pool" "test" {
-  location                       = "${azurerm_resource_group.test.location}"
-  resource_group_name            = "${azurerm_resource_group.test.name}"
-  loadbalancer_id                = "${azurerm_lb.test.id}"
+  resource_group_name            = azurerm_resource_group.test.name
+  loadbalancer_id                = azurerm_lb.test.id
   name                           = "%s"
   protocol                       = "Tcp"
   frontend_port_start            = 80
@@ -409,9 +412,8 @@ resource "azurerm_lb_nat_pool" "test" {
 }
 
 resource "azurerm_lb_nat_pool" "test2" {
-  location                       = "${azurerm_resource_group.test.location}"
-  resource_group_name            = "${azurerm_resource_group.test.name}"
-  loadbalancer_id                = "${azurerm_lb.test.id}"
+  resource_group_name            = azurerm_resource_group.test.name
+  loadbalancer_id                = azurerm_lb.test.id
   name                           = "%s"
   protocol                       = "Tcp"
   frontend_port_start            = 82

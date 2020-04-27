@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -32,11 +31,6 @@ func TestAccAzureRMApplicationSecurityGroup_basic(t *testing.T) {
 }
 
 func TestAccAzureRMApplicationSecurityGroup_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_application_security_group", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -166,6 +160,10 @@ func testCheckAzureRMApplicationSecurityGroupExists(resourceName string) resourc
 
 func testAccAzureRMApplicationSecurityGroup_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -173,8 +171,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_application_security_group" "test" {
   name                = "acctest-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
 }
@@ -185,15 +183,19 @@ func testAccAzureRMApplicationSecurityGroup_requiresImport(data acceptance.TestD
 %s
 
 resource "azurerm_application_security_group" "import" {
-  name                = "${azurerm_application_security_group.test.name}"
-  location            = "${azurerm_application_security_group.test.location}"
-  resource_group_name = "${azurerm_application_security_group.test.resource_group_name}"
+  name                = azurerm_application_security_group.test.name
+  location            = azurerm_application_security_group.test.location
+  resource_group_name = azurerm_application_security_group.test.resource_group_name
 }
 `, template)
 }
 
 func testAccAzureRMApplicationSecurityGroup_complete(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -201,8 +203,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_application_security_group" "test" {
   name                = "acctest-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   tags = {
     Hello = "World"

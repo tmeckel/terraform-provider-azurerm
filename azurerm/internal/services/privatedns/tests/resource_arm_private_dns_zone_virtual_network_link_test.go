@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -32,11 +31,6 @@ func TestAccAzureRMPrivateDnsZoneVirtualNetworkLink_basic(t *testing.T) {
 }
 
 func TestAccAzureRMPrivateDnsZoneVirtualNetworkLink_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_private_dns_zone_virtual_network_link", "test")
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { acceptance.PreCheck(t) },
@@ -142,6 +136,10 @@ func testCheckAzureRMPrivateDnsZoneVirtualNetworkLinkDestroy(s *terraform.State)
 
 func testAccAzureRMPrivateDnsZoneVirtualNetworkLink_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -180,16 +178,20 @@ func testAccAzureRMPrivateDnsZoneVirtualNetworkLink_requiresImport(data acceptan
 %s
 
 resource "azurerm_private_dns_zone_virtual_network_link" "import" {
-  name                  = "${azurerm_private_dns_zone_virtual_network_link.test.name}"
-  private_dns_zone_name = "${azurerm_private_dns_zone_virtual_network_link.test.private_dns_zone_name}"
-  virtual_network_id    = "${azurerm_private_dns_zone_virtual_network_link.test.virtual_network_id}"
-  resource_group_name   = "${azurerm_private_dns_zone_virtual_network_link.test.resource_group_name}"
+  name                  = azurerm_private_dns_zone_virtual_network_link.test.name
+  private_dns_zone_name = azurerm_private_dns_zone_virtual_network_link.test.private_dns_zone_name
+  virtual_network_id    = azurerm_private_dns_zone_virtual_network_link.test.virtual_network_id
+  resource_group_name   = azurerm_private_dns_zone_virtual_network_link.test.resource_group_name
 }
 `, template)
 }
 
 func testAccAzureRMPrivateDnsZoneVirtualNetworkLink_withTags(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -228,6 +230,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "test" {
 
 func testAccAzureRMPrivateDnsZoneVirtualNetworkLink_withTagsUpdate(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"

@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -33,10 +32,6 @@ func TestAccAzureRMVirtualWan_basic(t *testing.T) {
 }
 
 func TestAccAzureRMVirtualWan_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_virtual_wan", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -137,6 +132,10 @@ func testCheckAzureRMVirtualWanExists(resourceName string) resource.TestCheckFun
 
 func testAccAzureRMVirtualWan_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -165,6 +164,10 @@ resource "azurerm_virtual_wan" "import" {
 
 func testAccAzureRMVirtualWan_complete(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -179,6 +182,7 @@ resource "azurerm_virtual_wan" "test" {
   allow_branch_to_branch_traffic    = true
   allow_vnet_to_vnet_traffic        = true
   office365_local_breakout_category = "All"
+  type                              = "Standard"
 
   tags = {
     Hello = "There"

@@ -84,7 +84,7 @@ The following arguments are supported:
 
 A `import` block supports the following:
 
-* `content_format` - (Required) The format of the content from which the API Definition should be imported. Possible values are: `swagger-json`, `swagger-link-json`, `wadl-link-json`, `wadl-xml`, `wsdl` and `wsdl-link`.
+* `content_format` - (Required) The format of the content from which the API Definition should be imported. Possible values are: `openapi`, `openapi+json`, `openapi+json-link`, `openapi-link`, `swagger-json`, `swagger-link-json`, `wadl-link-json`, `wadl-xml`, `wsdl` and `wsdl-link`.
 
 * `content_value` - (Required) The Content from which the API Definition should be imported. When a `content_format` of `*-link-*` is specified this must be a URL, otherwise this must be defined inline.
 
@@ -120,9 +120,7 @@ In addition to all arguments above, the following attributes are exported:
 
 * `version_set_id` - The ID of the Version Set which this API is associated with.
 
-### Timeouts
-
-~> **Note:** Custom Timeouts are available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+## Timeouts
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 

@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -32,11 +31,6 @@ func TestAccAzureRMMySQLDatabase_basic(t *testing.T) {
 }
 
 func TestAccAzureRMMySQLDatabase_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_mysql_database", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -156,6 +150,10 @@ func testCheckAzureRMMySQLDatabaseDestroy(s *terraform.State) error {
 
 func testAccAzureRMMySQLDatabase_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -163,8 +161,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_mysql_server" "test" {
   name                = "acctestpsqlsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   sku_name = "GP_Gen5_2"
 
@@ -182,8 +180,8 @@ resource "azurerm_mysql_server" "test" {
 
 resource "azurerm_mysql_database" "test" {
   name                = "acctestdb_%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  server_name         = "${azurerm_mysql_server.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  server_name         = azurerm_mysql_server.test.name
   charset             = "utf8"
   collation           = "utf8_unicode_ci"
 }
@@ -195,17 +193,21 @@ func testAccAzureRMMySQLDatabase_requiresImport(data acceptance.TestData) string
 %s
 
 resource "azurerm_mysql_database" "import" {
-  name                = "${azurerm_mysql_database.test.name}"
-  resource_group_name = "${azurerm_mysql_database.test.resource_group_name}"
-  server_name         = "${azurerm_mysql_database.test.server_name}"
-  charset             = "${azurerm_mysql_database.test.charset}"
-  collation           = "${azurerm_mysql_database.test.collation}"
+  name                = azurerm_mysql_database.test.name
+  resource_group_name = azurerm_mysql_database.test.resource_group_name
+  server_name         = azurerm_mysql_database.test.server_name
+  charset             = azurerm_mysql_database.test.charset
+  collation           = azurerm_mysql_database.test.collation
 }
 `, testAccAzureRMMySQLDatabase_basic(data))
 }
 
 func testAccAzureRMMySQLDatabase_charsetUppercase(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -213,8 +215,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_mysql_server" "test" {
   name                = "acctestpsqlsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   sku_name = "GP_Gen5_2"
 
@@ -232,8 +234,8 @@ resource "azurerm_mysql_server" "test" {
 
 resource "azurerm_mysql_database" "test" {
   name                = "acctestdb_%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  server_name         = "${azurerm_mysql_server.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  server_name         = azurerm_mysql_server.test.name
   charset             = "UTF8"
   collation           = "utf8_unicode_ci"
 }
@@ -242,6 +244,10 @@ resource "azurerm_mysql_database" "test" {
 
 func testAccAzureRMMySQLDatabase_charsetMixedcase(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -249,8 +255,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_mysql_server" "test" {
   name                = "acctestpsqlsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   sku_name = "GP_Gen5_2"
 
@@ -268,8 +274,8 @@ resource "azurerm_mysql_server" "test" {
 
 resource "azurerm_mysql_database" "test" {
   name                = "acctestdb_%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  server_name         = "${azurerm_mysql_server.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  server_name         = azurerm_mysql_server.test.name
   charset             = "Utf8"
   collation           = "utf8_unicode_ci"
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -32,11 +31,6 @@ func TestAccAzureRMPointToSiteVPNGateway_basic(t *testing.T) {
 }
 
 func TestAccAzureRMPointToSiteVPNGateway_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_point_to_site_vpn_gateway", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -250,6 +244,10 @@ resource "azurerm_point_to_site_vpn_gateway" "test" {
 
 func testAccAzureRMAzureRMPointToSiteVPNGateway_template(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"

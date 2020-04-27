@@ -53,7 +53,7 @@ The following arguments are supported:
 
 * `location` - (Required) The Azure Region in which the Resource Group exists. Changing this forces a new resource to be created.
 
-* `compatibility_level` - (Required) Specifies the compatibility level for this job - which controls certain runtime behaviors of the streaming job. Possible values are `1.0` and `1.1`.
+* `compatibility_level` - (Required) Specifies the compatibility level for this job - which controls certain runtime behaviours of the streaming job. Possible values are `1.0` and `1.1`.
 
 -> **NOTE:** Support for Compatibility Level 1.2 is dependent on a new version of the Stream Analytics API, which [being tracked in this issue](https://github.com/Azure/azure-rest-api-specs/issues/5604).
 
@@ -81,9 +81,7 @@ The following attributes are exported in addition to the arguments listed above:
 
 * `job_id` - The Job ID assigned by the Stream Analytics Job.
 
-### Timeouts
-
-~> **Note:** Custom Timeouts are available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+## Timeouts
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 

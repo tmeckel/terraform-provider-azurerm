@@ -8,7 +8,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
@@ -34,31 +33,7 @@ func TestAccAzureRMKeyVaultKey_basicEC(t *testing.T) {
 	})
 }
 
-func TestAccAzureRMKeyVaultKey_basicECClassic(t *testing.T) {
-	data := acceptance.BuildTestData(t, "azurerm_key_vault_key", "test")
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { acceptance.PreCheck(t) },
-		Providers:    acceptance.SupportedProviders,
-		CheckDestroy: testCheckAzureRMKeyVaultKeyDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAzureRMKeyVaultKey_basicECClassic(data),
-				Check: resource.ComposeTestCheckFunc(
-					testCheckAzureRMKeyVaultKeyExists(data.ResourceName),
-				),
-			},
-			data.ImportStep("key_size"),
-		},
-	})
-}
-
 func TestAccAzureRMKeyVaultKey_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_key_vault_key", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -248,6 +223,7 @@ func TestAccAzureRMKeyVaultKey_disappearsWhenParentKeyVaultDeleted(t *testing.T)
 
 func testCheckAzureRMKeyVaultKeyDestroy(s *terraform.State) error {
 	client := acceptance.AzureProvider.Meta().(*clients.Client).KeyVault.ManagementClient
+	vaultClient := acceptance.AzureProvider.Meta().(*clients.Client).KeyVault.VaultsClient
 	ctx := acceptance.AzureProvider.Meta().(*clients.Client).StopContext
 
 	for _, rs := range s.RootModule().Resources {
@@ -256,8 +232,12 @@ func testCheckAzureRMKeyVaultKeyDestroy(s *terraform.State) error {
 		}
 
 		name := rs.Primary.Attributes["name"]
-		vaultBaseUrl := rs.Primary.Attributes["vault_uri"]
 		keyVaultId := rs.Primary.Attributes["key_vault_id"]
+		vaultBaseUrl, err := azure.GetKeyVaultBaseUrlFromID(ctx, vaultClient, keyVaultId)
+		if err != nil {
+			// key vault's been deleted
+			return nil
+		}
 
 		ok, err := azure.KeyVaultExists(ctx, acceptance.AzureProvider.Meta().(*clients.Client).KeyVault.VaultsClient, keyVaultId)
 		if err != nil {
@@ -286,6 +266,7 @@ func testCheckAzureRMKeyVaultKeyDestroy(s *terraform.State) error {
 func testCheckAzureRMKeyVaultKeyExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := acceptance.AzureProvider.Meta().(*clients.Client).KeyVault.ManagementClient
+		vaultClient := acceptance.AzureProvider.Meta().(*clients.Client).KeyVault.VaultsClient
 		ctx := acceptance.AzureProvider.Meta().(*clients.Client).StopContext
 
 		// Ensure we have enough information in state to look up in API
@@ -294,10 +275,13 @@ func testCheckAzureRMKeyVaultKeyExists(resourceName string) resource.TestCheckFu
 			return fmt.Errorf("Not found: %s", resourceName)
 		}
 		name := rs.Primary.Attributes["name"]
-		vaultBaseUrl := rs.Primary.Attributes["vault_uri"]
 		keyVaultId := rs.Primary.Attributes["key_vault_id"]
+		vaultBaseUrl, err := azure.GetKeyVaultBaseUrlFromID(ctx, vaultClient, keyVaultId)
+		if err != nil {
+			return fmt.Errorf("Error looking up Secret %q vault url from id %q: %+v", name, keyVaultId, err)
+		}
 
-		ok, err := azure.KeyVaultExists(ctx, acceptance.AzureProvider.Meta().(*clients.Client).KeyVault.VaultsClient, keyVaultId)
+		ok, err = azure.KeyVaultExists(ctx, acceptance.AzureProvider.Meta().(*clients.Client).KeyVault.VaultsClient, keyVaultId)
 		if err != nil {
 			return fmt.Errorf("Error checking if key vault %q for Key %q in Vault at url %q exists: %v", keyVaultId, name, vaultBaseUrl, err)
 		}
@@ -322,6 +306,7 @@ func testCheckAzureRMKeyVaultKeyExists(resourceName string) resource.TestCheckFu
 func testCheckAzureRMKeyVaultKeyDisappears(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := acceptance.AzureProvider.Meta().(*clients.Client).KeyVault.ManagementClient
+		vaultClient := acceptance.AzureProvider.Meta().(*clients.Client).KeyVault.VaultsClient
 		ctx := acceptance.AzureProvider.Meta().(*clients.Client).StopContext
 
 		// Ensure we have enough information in state to look up in API
@@ -331,10 +316,13 @@ func testCheckAzureRMKeyVaultKeyDisappears(resourceName string) resource.TestChe
 		}
 
 		name := rs.Primary.Attributes["name"]
-		vaultBaseUrl := rs.Primary.Attributes["vault_uri"]
 		keyVaultId := rs.Primary.Attributes["key_vault_id"]
+		vaultBaseUrl, err := azure.GetKeyVaultBaseUrlFromID(ctx, vaultClient, keyVaultId)
+		if err != nil {
+			return fmt.Errorf("Error looking up Secret %q vault url from id %q: %+v", name, keyVaultId, err)
+		}
 
-		ok, err := azure.KeyVaultExists(ctx, acceptance.AzureProvider.Meta().(*clients.Client).KeyVault.VaultsClient, keyVaultId)
+		ok, err = azure.KeyVaultExists(ctx, acceptance.AzureProvider.Meta().(*clients.Client).KeyVault.VaultsClient, keyVaultId)
 		if err != nil {
 			return fmt.Errorf("Error checking if key vault %q for Key %q in Vault at url %q exists: %v", keyVaultId, name, vaultBaseUrl, err)
 		}
@@ -358,7 +346,12 @@ func testCheckAzureRMKeyVaultKeyDisappears(resourceName string) resource.TestChe
 
 func testAccAzureRMKeyVaultKey_basicEC(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
@@ -367,15 +360,15 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_key_vault" "test" {
   name                = "acctestkv-%s"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
 
   sku_name = "premium"
 
   access_policy {
-    tenant_id = "${data.azurerm_client_config.current.tenant_id}"
-    object_id = "${data.azurerm_client_config.current.service_principal_object_id}"
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
 
     key_permissions = [
       "create",
@@ -397,62 +390,9 @@ resource "azurerm_key_vault" "test" {
 
 resource "azurerm_key_vault_key" "test" {
   name         = "key-%s"
-  key_vault_id = "${azurerm_key_vault.test.id}"
+  key_vault_id = azurerm_key_vault.test.id
   key_type     = "EC"
   key_size     = 2048
-
-  key_opts = [
-    "sign",
-    "verify",
-  ]
-}
-`, data.RandomInteger, data.Locations.Primary, data.RandomString, data.RandomString)
-}
-
-func testAccAzureRMKeyVaultKey_basicECClassic(data acceptance.TestData) string {
-	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
-
-resource "azurerm_resource_group" "test" {
-  name     = "acctestRG-%d"
-  location = "%s"
-}
-
-resource "azurerm_key_vault" "test" {
-  name                = "acctestkv-%s"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
-
-  sku_name = "premium"
-
-  access_policy {
-    tenant_id = "${data.azurerm_client_config.current.tenant_id}"
-    object_id = "${data.azurerm_client_config.current.service_principal_object_id}"
-
-    key_permissions = [
-      "create",
-      "delete",
-      "get",
-    ]
-
-    secret_permissions = [
-      "get",
-      "delete",
-      "set",
-    ]
-  }
-
-  tags = {
-    environment = "Production"
-  }
-}
-
-resource "azurerm_key_vault_key" "test" {
-  name      = "key-%s"
-  vault_uri = "${azurerm_key_vault.test.vault_uri}"
-  key_type  = "EC"
-  key_size  = 2048
 
   key_opts = [
     "sign",
@@ -468,8 +408,8 @@ func testAccAzureRMKeyVaultKey_requiresImport(data acceptance.TestData) string {
 %s
 
 resource "azurerm_key_vault_key" "import" {
-  name         = "${azurerm_key_vault_key.test.name}"
-  key_vault_id = "${azurerm_key_vault.test.id}"
+  name         = azurerm_key_vault_key.test.name
+  key_vault_id = azurerm_key_vault.test.id
   key_type     = "EC"
   key_size     = 2048
 
@@ -483,7 +423,12 @@ resource "azurerm_key_vault_key" "import" {
 
 func testAccAzureRMKeyVaultKey_basicRSA(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
@@ -492,15 +437,15 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_key_vault" "test" {
   name                = "acctestkv-%s"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
 
   sku_name = "premium"
 
   access_policy {
-    tenant_id = "${data.azurerm_client_config.current.tenant_id}"
-    object_id = "${data.azurerm_client_config.current.service_principal_object_id}"
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
 
     key_permissions = [
       "create",
@@ -523,7 +468,7 @@ resource "azurerm_key_vault" "test" {
 
 resource "azurerm_key_vault_key" "test" {
   name         = "key-%s"
-  key_vault_id = "${azurerm_key_vault.test.id}"
+  key_vault_id = azurerm_key_vault.test.id
   key_type     = "RSA"
   key_size     = 2048
 
@@ -541,7 +486,12 @@ resource "azurerm_key_vault_key" "test" {
 
 func testAccAzureRMKeyVaultKey_basicRSAHSM(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
@@ -550,15 +500,15 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_key_vault" "test" {
   name                = "acctestkv-%s"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
 
   sku_name = "premium"
 
   access_policy {
-    tenant_id = "${data.azurerm_client_config.current.tenant_id}"
-    object_id = "${data.azurerm_client_config.current.service_principal_object_id}"
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
 
     key_permissions = [
       "create",
@@ -580,7 +530,7 @@ resource "azurerm_key_vault" "test" {
 
 resource "azurerm_key_vault_key" "test" {
   name         = "key-%s"
-  key_vault_id = "${azurerm_key_vault.test.id}"
+  key_vault_id = azurerm_key_vault.test.id
   key_type     = "RSA-HSM"
   key_size     = 2048
 
@@ -598,7 +548,12 @@ resource "azurerm_key_vault_key" "test" {
 
 func testAccAzureRMKeyVaultKey_complete(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
@@ -607,15 +562,15 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_key_vault" "test" {
   name                = "acctestkv-%s"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
 
   sku_name = "premium"
 
   access_policy {
-    tenant_id = "${data.azurerm_client_config.current.tenant_id}"
-    object_id = "${data.azurerm_client_config.current.service_principal_object_id}"
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
 
     key_permissions = [
       "create",
@@ -637,7 +592,7 @@ resource "azurerm_key_vault" "test" {
 
 resource "azurerm_key_vault_key" "test" {
   name            = "key-%s"
-  key_vault_id    = "${azurerm_key_vault.test.id}"
+  key_vault_id    = azurerm_key_vault.test.id
   key_type        = "RSA"
   key_size        = 2048
   not_before_date = "2020-01-01T01:02:03Z"
@@ -661,7 +616,12 @@ resource "azurerm_key_vault_key" "test" {
 
 func testAccAzureRMKeyVaultKey_basicUpdated(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
@@ -670,15 +630,15 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_key_vault" "test" {
   name                = "acctestkv-%s"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
 
   sku_name = "premium"
 
   access_policy {
-    tenant_id = "${data.azurerm_client_config.current.tenant_id}"
-    object_id = "${data.azurerm_client_config.current.service_principal_object_id}"
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
 
     key_permissions = [
       "create",
@@ -700,10 +660,10 @@ resource "azurerm_key_vault" "test" {
 }
 
 resource "azurerm_key_vault_key" "test" {
-  name      = "key-%s"
-  vault_uri = "${azurerm_key_vault.test.vault_uri}"
-  key_type  = "RSA"
-  key_size  = 2048
+  name         = "key-%s"
+  key_vault_id = azurerm_key_vault.test.id
+  key_type     = "RSA"
+  key_size     = 2048
 
   key_opts = [
     "encrypt",
@@ -718,7 +678,12 @@ resource "azurerm_key_vault_key" "test" {
 
 func testAccAzureRMKeyVaultKey_curveEC(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
@@ -727,17 +692,15 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_key_vault" "test" {
   name                = "acctestkv-%s"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
 
-  sku {
-    name = "premium"
-  }
+  sku_name = "premium"
 
   access_policy {
-    tenant_id = "${data.azurerm_client_config.current.tenant_id}"
-    object_id = "${data.azurerm_client_config.current.service_principal_object_id}"
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
 
     key_permissions = [
       "create",
@@ -758,10 +721,10 @@ resource "azurerm_key_vault" "test" {
 }
 
 resource "azurerm_key_vault_key" "test" {
-  name      = "key-%s"
-  vault_uri = "${azurerm_key_vault.test.vault_uri}"
-  key_type  = "EC"
-  curve     = "P-521"
+  name         = "key-%s"
+  key_vault_id = azurerm_key_vault.test.id
+  key_type     = "EC"
+  curve        = "P-521"
 
   key_opts = [
     "sign",
@@ -773,7 +736,12 @@ resource "azurerm_key_vault_key" "test" {
 
 func testAccAzureRMKeyVaultKey_basicECHSM(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
@@ -782,17 +750,15 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_key_vault" "test" {
   name                = "acctestkv-%s"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
 
-  sku {
-    name = "premium"
-  }
+  sku_name = "premium"
 
   access_policy {
-    tenant_id = "${data.azurerm_client_config.current.tenant_id}"
-    object_id = "${data.azurerm_client_config.current.service_principal_object_id}"
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
 
     key_permissions = [
       "create",
@@ -813,10 +779,10 @@ resource "azurerm_key_vault" "test" {
 }
 
 resource "azurerm_key_vault_key" "test" {
-  name      = "key-%s"
-  vault_uri = "${azurerm_key_vault.test.vault_uri}"
-  key_type  = "EC-HSM"
-  curve     = "P-521"
+  name         = "key-%s"
+  key_vault_id = azurerm_key_vault.test.id
+  key_type     = "EC-HSM"
+  curve        = "P-521"
 
   key_opts = [
     "sign",

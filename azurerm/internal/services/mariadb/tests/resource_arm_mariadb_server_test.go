@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -34,34 +33,7 @@ func TestAccAzureRMMariaDbServer_basic(t *testing.T) {
 	})
 }
 
-func TestAccAzureRMMariaDbServer_basicOldSku(t *testing.T) {
-	data := acceptance.BuildTestData(t, "azurerm_mariadb_server", "test")
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { acceptance.PreCheck(t) },
-		Providers:    acceptance.SupportedProviders,
-		CheckDestroy: testCheckAzureRMMariaDbServerDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAzureRMMariaDbServer_basicOldSku(data),
-				Check: resource.ComposeTestCheckFunc(
-					testCheckAzureRMMariaDbServerExists(data.ResourceName),
-					resource.TestCheckResourceAttr(data.ResourceName, "administrator_login", "acctestun"),
-					resource.TestCheckResourceAttr(data.ResourceName, "version", "10.2"),
-					resource.TestCheckResourceAttr(data.ResourceName, "ssl_enforcement", "Enabled"),
-				),
-			},
-			data.ImportStep("administrator_login_password"), // not returned as sensitive
-		},
-	})
-}
-
 func TestAccAzureRMMariaDbServer_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_mariadb_server", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -211,10 +183,7 @@ func TestAccAzureRMMariaDbServer_updateSKU(t *testing.T) {
 				Config: testAccAzureRMMariaDbServer_generalPurpose(data),
 				Check: resource.ComposeTestCheckFunc(
 					testCheckAzureRMMariaDbServerExists(data.ResourceName),
-					resource.TestCheckResourceAttr(data.ResourceName, "sku.0.name", "GP_Gen5_32"),
-					resource.TestCheckResourceAttr(data.ResourceName, "sku.0.capacity", "32"),
-					resource.TestCheckResourceAttr(data.ResourceName, "sku.0.tier", "GeneralPurpose"),
-					resource.TestCheckResourceAttr(data.ResourceName, "sku.0.family", "Gen5"),
+					resource.TestCheckResourceAttr(data.ResourceName, "sku_name", "GP_Gen5_32"),
 					resource.TestCheckResourceAttr(data.ResourceName, "storage_profile.0.storage_mb", "640000"),
 					resource.TestCheckResourceAttr(data.ResourceName, "administrator_login", "acctestun"),
 				),
@@ -223,10 +192,7 @@ func TestAccAzureRMMariaDbServer_updateSKU(t *testing.T) {
 				Config: testAccAzureRMMariaDbServer_memoryOptimized(data),
 				Check: resource.ComposeTestCheckFunc(
 					testCheckAzureRMMariaDbServerExists(data.ResourceName),
-					resource.TestCheckResourceAttr(data.ResourceName, "sku.0.name", "MO_Gen5_16"),
-					resource.TestCheckResourceAttr(data.ResourceName, "sku.0.capacity", "16"),
-					resource.TestCheckResourceAttr(data.ResourceName, "sku.0.tier", "MemoryOptimized"),
-					resource.TestCheckResourceAttr(data.ResourceName, "sku.0.family", "Gen5"),
+					resource.TestCheckResourceAttr(data.ResourceName, "sku_name", "MO_Gen5_16"),
 					resource.TestCheckResourceAttr(data.ResourceName, "storage_profile.0.storage_mb", "4096000"),
 					resource.TestCheckResourceAttr(data.ResourceName, "administrator_login", "acctestun"),
 				),
@@ -320,6 +286,10 @@ func testCheckAzureRMMariaDbServerDestroy(s *terraform.State) error {
 
 func testAccAzureRMMariaDbServer_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -327,43 +297,10 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_mariadb_server" "test" {
   name                = "acctestmariadbsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   sku_name = "B_Gen5_2"
-
-  storage_profile {
-    storage_mb            = 51200
-    backup_retention_days = 7
-    geo_redundant_backup  = "Disabled"
-  }
-
-  administrator_login          = "acctestun"
-  administrator_login_password = "H@Sh1CoR3!"
-  version                      = "10.2"
-  ssl_enforcement              = "Enabled"
-}
-`, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
-}
-
-func testAccAzureRMMariaDbServer_basicOldSku(data acceptance.TestData) string {
-	return fmt.Sprintf(`
-resource "azurerm_resource_group" "test" {
-  name     = "acctestRG-%d"
-  location = "%s"
-}
-
-resource "azurerm_mariadb_server" "test" {
-  name                = "acctestmariadbsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-
-  sku {
-    name     = "B_Gen5_2"
-    capacity = 2
-    tier     = "Basic"
-    family   = "Gen5"
-  }
 
   storage_profile {
     storage_mb            = 51200
@@ -385,9 +322,9 @@ func testAccAzureRMMariaDbServer_requiresImport(data acceptance.TestData) string
 %s
 
 resource "azurerm_mariadb_server" "import" {
-  name                = "${azurerm_mariadb_server.test.name}"
-  location            = "${azurerm_mariadb_server.test.location}"
-  resource_group_name = "${azurerm_mariadb_server.test.resource_group_name}"
+  name                = azurerm_mariadb_server.test.name
+  location            = azurerm_mariadb_server.test.location
+  resource_group_name = azurerm_mariadb_server.test.resource_group_name
 
   sku_name = "B_Gen5_2"
 
@@ -407,6 +344,10 @@ resource "azurerm_mariadb_server" "import" {
 
 func testAccAzureRMMariaDbServer_basicUpdatedPassword(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -414,8 +355,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_mariadb_server" "test" {
   name                = "acctestmariadbsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   sku_name = "B_Gen5_2"
 
@@ -435,6 +376,10 @@ resource "azurerm_mariadb_server" "test" {
 
 func testAccAzureRMMariaDbServer_basicUpdated(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -442,8 +387,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_mariadb_server" "test" {
   name                = "acctestmariadbsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   sku_name = "B_Gen5_1"
 
@@ -463,6 +408,10 @@ resource "azurerm_mariadb_server" "test" {
 
 func testAccAzureRMMariaDbServer_basicMaxStorage(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -470,8 +419,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_mariadb_server" "test" {
   name                = "acctestmariadbsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   sku_name = "B_Gen5_2"
 
@@ -491,6 +440,10 @@ resource "azurerm_mariadb_server" "test" {
 
 func testAccAzureRMMariaDbServer_generalPurpose(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -498,8 +451,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_mariadb_server" "test" {
   name                = "acctestmariadbsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   sku_name = "GP_Gen5_32"
 
@@ -519,6 +472,10 @@ resource "azurerm_mariadb_server" "test" {
 
 func testAccAzureRMMariaDbServer_memoryOptimized(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -526,8 +483,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_mariadb_server" "test" {
   name                = "acctestmariadbsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   sku_name = "MO_Gen5_16"
 
@@ -547,6 +504,10 @@ resource "azurerm_mariadb_server" "test" {
 
 func testAccAzureRMMariaDbServer_memoryOptimizedGeoRedundant(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -554,8 +515,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_mariadb_server" "test" {
   name                = "acctestmariadbsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   sku_name = "MO_Gen5_16"
 
@@ -575,6 +536,10 @@ resource "azurerm_mariadb_server" "test" {
 
 func testAccAzureRMMariaDbServer_storageAutogrowUpdated(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -582,8 +547,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_mariadb_server" "test" {
   name                = "acctestmariadbsvr-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   sku_name = "B_Gen5_2"
 

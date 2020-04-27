@@ -10,7 +10,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -38,10 +37,6 @@ func TestAccAzureRMIotHubEndpointStorageContainer_basic(t *testing.T) {
 }
 
 func TestAccAzureRMIotHubEndpointStorageContainer_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_iothub_endpoint_storage_container", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -65,6 +60,10 @@ func TestAccAzureRMIotHubEndpointStorageContainer_requiresImport(t *testing.T) {
 
 func testAccAzureRMIotHubEndpointStorageContainer_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-iothub-%[1]d"
   location = "%[2]s"
@@ -72,27 +71,25 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_storage_account" "test" {
   name                     = "acc%[1]d"
-  resource_group_name      = "${azurerm_resource_group.test.name}"
-  location                 = "${azurerm_resource_group.test.location}"
+  resource_group_name      = azurerm_resource_group.test.name
+  location                 = azurerm_resource_group.test.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
 }
 
 resource "azurerm_storage_container" "test" {
   name                  = "acctestcont"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
-  storage_account_name  = "${azurerm_storage_account.test.name}"
+  storage_account_name  = azurerm_storage_account.test.name
   container_access_type = "private"
 }
 
 resource "azurerm_iothub" "test" {
   name                = "acctestIoTHub-%[1]d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 
   sku {
     name     = "B1"
-    tier     = "Basic"
     capacity = "1"
   }
 
@@ -102,12 +99,12 @@ resource "azurerm_iothub" "test" {
 }
 
 resource "azurerm_iothub_endpoint_storage_container" "test" {
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  iothub_name         = "${azurerm_iothub.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  iothub_name         = azurerm_iothub.test.name
   name                = "acctest"
 
   container_name    = "acctestcont"
-  connection_string = "${azurerm_storage_account.test.primary_blob_connection_string}"
+  connection_string = azurerm_storage_account.test.primary_blob_connection_string
 
   file_name_format           = "{iothub}/{partition}_{YYYY}_{MM}_{DD}_{HH}_{mm}"
   batch_frequency_in_seconds = 60
@@ -123,12 +120,12 @@ func testAccAzureRMIotHubEndpointStorageContainer_requiresImport(data acceptance
 %s
 
 resource "azurerm_iothub_endpoint_storage_container" "import" {
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  iothub_name         = "${azurerm_iothub.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  iothub_name         = azurerm_iothub.test.name
   name                = "acctest"
 
   container_name    = "acctestcont"
-  connection_string = "${azurerm_storage_account.test.primary_blob_connection_string}"
+  connection_string = azurerm_storage_account.test.primary_blob_connection_string
 
   file_name_format           = "{iothub}/{partition}_{YYYY}_{MM}_{DD}_{HH}_{mm}"
   batch_frequency_in_seconds = 60

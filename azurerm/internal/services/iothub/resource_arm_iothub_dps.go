@@ -73,19 +73,7 @@ func resourceArmIotHubDPS() *schema.Resource {
 								string(devices.S1),
 								string(devices.S2),
 								string(devices.S3),
-							}, true), // todo 2.0 make this case sensitive
-						},
-
-						"tier": {
-							Type:       schema.TypeString,
-							Optional:   true,
-							Computed:   true,
-							Deprecated: "This property is no longer required and will be removed in version 2.0 of the provider",
-							ValidateFunc: validation.StringInSlice([]string{
-								string(devices.Basic),
-								string(devices.Free),
-								string(devices.Standard),
-							}, true),
+							}, false),
 						},
 
 						"capacity": {
@@ -231,6 +219,10 @@ func resourceArmIotHubDPSRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	resourceGroup := id.ResourceGroup
 	name := id.Path["provisioningServices"]
+	// the name path can use the ProvisioningServices in older iterations
+	if name == "" {
+		name = id.Path["ProvisioningServices"]
+	}
 
 	resp, err := client.Get(ctx, name, resourceGroup)
 	if err != nil {
@@ -295,12 +287,7 @@ func waitForIotHubDPSToBeDeleted(ctx context.Context, client *iothub.IotDpsResou
 		Pending: []string{"200"},
 		Target:  []string{"404"},
 		Refresh: iothubdpsStateStatusCodeRefreshFunc(ctx, client, resourceGroup, name),
-	}
-
-	if features.SupportsCustomTimeouts() {
-		stateConf.Timeout = d.Timeout(schema.TimeoutDelete)
-	} else {
-		stateConf.Timeout = 40 * time.Minute
+		Timeout: d.Timeout(schema.TimeoutDelete),
 	}
 
 	if _, err := stateConf.WaitForState(); err != nil {
@@ -359,7 +346,6 @@ func flattenIoTHubDPSSku(input *iothub.IotDpsSkuInfo) []interface{} {
 	output := make(map[string]interface{})
 
 	output["name"] = string(input.Name)
-	output["tier"] = input.Tier
 	if capacity := input.Capacity; capacity != nil {
 		output["capacity"] = int(*capacity)
 	}

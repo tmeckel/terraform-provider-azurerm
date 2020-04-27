@@ -49,9 +49,15 @@ The following attributes are exported:
 
 * `access_endpoint` - The Access Endpoint for the Logic App Workflow
 
-### Timeouts
+* `connector_endpoint_ip_addresses` - The list of access endpoint ip addresses of connector.
 
-~> **Note:** Custom Timeouts are available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+* `connector_outbound_ip_addresses` - The list of outgoing ip addresses of connector.
+
+* `workflow_endpoint_ip_addresses` - The list of access endpoint ip addresses of workflow.
+
+* `workflow_outbound_ip_addresses` - The list of outgoing ip addresses of workflow.
+
+## Timeouts
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 

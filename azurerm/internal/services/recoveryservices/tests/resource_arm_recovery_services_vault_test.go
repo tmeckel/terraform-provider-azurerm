@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -84,11 +83,6 @@ func TestAccAzureRMRecoveryServicesVault_update(t *testing.T) {
 }
 
 func TestAccAzureRMRecoveryServicesVault_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_recovery_services_vault", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -171,6 +165,10 @@ func testCheckAzureRMRecoveryServicesVaultExists(resourceName string) resource.T
 
 func testAccAzureRMRecoveryServicesVault_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-recovery-%d"
   location = "%s"
@@ -178,8 +176,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_recovery_services_vault" "test" {
   name                = "acctest-Vault-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   sku                 = "Standard"
 
   soft_delete_enabled = false
@@ -189,6 +187,10 @@ resource "azurerm_recovery_services_vault" "test" {
 
 func testAccAzureRMRecoveryServicesVault_complete(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-recovery-%d"
   location = "%s"
@@ -196,8 +198,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_recovery_services_vault" "test" {
   name                = "acctest-Vault-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   sku                 = "Standard"
 
   soft_delete_enabled = false
@@ -211,10 +213,10 @@ func testAccAzureRMRecoveryServicesVault_requiresImport(data acceptance.TestData
 %s
 
 resource "azurerm_recovery_services_vault" "import" {
-  name                = "${azurerm_recovery_services_vault.test.name}"
-  location            = "${azurerm_recovery_services_vault.test.location}"
-  resource_group_name = "${azurerm_recovery_services_vault.test.resource_group_name}"
-  sku                 = "${azurerm_recovery_services_vault.test.sku}"
+  name                = azurerm_recovery_services_vault.test.name
+  location            = azurerm_recovery_services_vault.test.location
+  resource_group_name = azurerm_recovery_services_vault.test.resource_group_name
+  sku                 = azurerm_recovery_services_vault.test.sku
 }
 `, template)
 }

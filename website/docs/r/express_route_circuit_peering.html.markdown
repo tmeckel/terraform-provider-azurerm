@@ -78,6 +78,8 @@ The following arguments are supported:
 A `microsoft_peering_config` block contains:
 
 * `advertised_public_prefixes` - (Required) A list of Advertised Public Prefixes
+* `customer_asn` - (Optional) The CustomerASN of the peering
+* `routing_registry_name` - (Optional) The RoutingRegistryName of the configuration
 
 ## Attributes Reference
 
@@ -91,9 +93,9 @@ The following attributes are exported:
 
 * `secondary_azure_port` - The Secondary Port used by Azure for this Peering.
 
-### Timeouts
+## Timeouts
 
-~> **Note:** Custom Timeouts is available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 

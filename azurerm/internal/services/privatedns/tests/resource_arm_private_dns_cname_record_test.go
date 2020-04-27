@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 )
 
 func TestAccAzureRMPrivateDnsCNameRecord_basic(t *testing.T) {
@@ -24,6 +23,7 @@ func TestAccAzureRMPrivateDnsCNameRecord_basic(t *testing.T) {
 				Config: testAccAzureRMPrivateDnsCNameRecord_basic(data),
 				Check: resource.ComposeTestCheckFunc(
 					testCheckAzureRMPrivateDnsCNameRecordExists(data.ResourceName),
+					resource.TestCheckResourceAttrSet(data.ResourceName, "fqdn"),
 				),
 			},
 			data.ImportStep(),
@@ -32,11 +32,6 @@ func TestAccAzureRMPrivateDnsCNameRecord_basic(t *testing.T) {
 }
 
 func TestAccAzureRMPrivateDnsCNameRecord_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_private_dns_cname_record", "test")
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { acceptance.PreCheck(t) },
@@ -184,6 +179,10 @@ func testCheckAzureRMPrivateDnsCNameRecordDestroy(s *terraform.State) error {
 
 func testAccAzureRMPrivateDnsCNameRecord_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -191,13 +190,13 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_private_dns_zone" "test" {
   name                = "acctestzone%d.com"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
 }
 
 resource "azurerm_private_dns_cname_record" "test" {
   name                = "acctestcname%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  zone_name           = "${azurerm_private_dns_zone.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  zone_name           = azurerm_private_dns_zone.test.name
   ttl                 = 300
   record              = "contoso.com"
 }
@@ -210,9 +209,9 @@ func testAccAzureRMPrivateDnsCNameRecord_requiresImport(data acceptance.TestData
 %s
 
 resource "azurerm_private_dns_cname_record" "import" {
-  name                = "${azurerm_private_dns_cname_record.test.name}"
-  resource_group_name = "${azurerm_private_dns_cname_record.test.resource_group_name}"
-  zone_name           = "${azurerm_private_dns_cname_record.test.zone_name}"
+  name                = azurerm_private_dns_cname_record.test.name
+  resource_group_name = azurerm_private_dns_cname_record.test.resource_group_name
+  zone_name           = azurerm_private_dns_cname_record.test.zone_name
   ttl                 = 300
   record              = "contoso.com"
 }
@@ -221,6 +220,10 @@ resource "azurerm_private_dns_cname_record" "import" {
 
 func testAccAzureRMPrivateDnsCNameRecord_subdomain(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -228,13 +231,13 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_private_dns_zone" "test" {
   name                = "acctestzone%d.com"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
 }
 
 resource "azurerm_private_dns_cname_record" "test" {
   name                = "acctestcname%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  zone_name           = "${azurerm_private_dns_zone.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  zone_name           = azurerm_private_dns_zone.test.name
   ttl                 = 300
   record              = "test.contoso.com"
 }
@@ -243,6 +246,10 @@ resource "azurerm_private_dns_cname_record" "test" {
 
 func testAccAzureRMPrivateDnsCNameRecord_updateRecords(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -250,13 +257,13 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_private_dns_zone" "test" {
   name                = "acctestzone%d.com"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
 }
 
 resource "azurerm_private_dns_cname_record" "test" {
   name                = "acctestcname%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  zone_name           = "${azurerm_private_dns_zone.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  zone_name           = azurerm_private_dns_zone.test.name
   ttl                 = 300
   record              = "contoso.com"
 }
@@ -265,6 +272,10 @@ resource "azurerm_private_dns_cname_record" "test" {
 
 func testAccAzureRMPrivateDnsCNameRecord_withTags(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -272,13 +283,13 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_private_dns_zone" "test" {
   name                = "acctestzone%d.com"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
 }
 
 resource "azurerm_private_dns_cname_record" "test" {
   name                = "acctestcname%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  zone_name           = "${azurerm_private_dns_zone.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  zone_name           = azurerm_private_dns_zone.test.name
   ttl                 = 300
   record              = "contoso.com"
 
@@ -292,6 +303,10 @@ resource "azurerm_private_dns_cname_record" "test" {
 
 func testAccAzureRMPrivateDnsCNameRecord_withTagsUpdate(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -299,13 +314,13 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_private_dns_zone" "test" {
   name                = "acctestzone%d.com"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
 }
 
 resource "azurerm_private_dns_cname_record" "test" {
   name                = "acctestcname%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  zone_name           = "${azurerm_private_dns_zone.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  zone_name           = azurerm_private_dns_zone.test.name
   ttl                 = 300
   record              = "contoso.com"
 

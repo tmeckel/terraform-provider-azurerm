@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 )
 
 func TestAccAzureRMApplicationInsights_basicWeb(t *testing.T) {
@@ -33,10 +32,6 @@ func TestAccAzureRMApplicationInsights_basicWeb(t *testing.T) {
 }
 
 func TestAccAzureRMApplicationInsights_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_application_insights", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -263,6 +258,10 @@ func TestAccAzureRMApplicationInsights_complete(t *testing.T) {
 
 func testAccAzureRMApplicationInsights_basic(data acceptance.TestData, applicationType string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -270,8 +269,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_application_insights" "test" {
   name                = "acctestappinsights-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   application_type    = "%s"
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, applicationType)
@@ -283,16 +282,20 @@ func testAccAzureRMApplicationInsights_requiresImport(data acceptance.TestData, 
 %s
 
 resource "azurerm_application_insights" "import" {
-  name                = "${azurerm_application_insights.test.name}"
-  location            = "${azurerm_application_insights.test.location}"
-  resource_group_name = "${azurerm_application_insights.test.resource_group_name}"
-  application_type    = "${azurerm_application_insights.test.application_type}"
+  name                = azurerm_application_insights.test.name
+  location            = azurerm_application_insights.test.location
+  resource_group_name = azurerm_application_insights.test.resource_group_name
+  application_type    = azurerm_application_insights.test.application_type
 }
 `, template)
 }
 
 func testAccAzureRMApplicationInsights_complete(data acceptance.TestData, applicationType string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -300,13 +303,14 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_application_insights" "test" {
   name                                  = "acctestappinsights-%d"
-  location                              = "${azurerm_resource_group.test.location}"
-  resource_group_name                   = "${azurerm_resource_group.test.name}"
+  location                              = azurerm_resource_group.test.location
+  resource_group_name                   = azurerm_resource_group.test.name
   application_type                      = "%s"
   retention_in_days                     = 120
   sampling_percentage                   = 50
   daily_data_cap_in_gb                  = 50
   daily_data_cap_notifications_disabled = true
+  disable_ip_masking                    = true
 
   tags = {
     Hello = "World"

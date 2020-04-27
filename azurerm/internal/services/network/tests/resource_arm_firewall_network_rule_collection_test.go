@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 )
 
 func TestAccAzureRMFirewallNetworkRuleCollection_basic(t *testing.T) {
@@ -36,11 +35,6 @@ func TestAccAzureRMFirewallNetworkRuleCollection_basic(t *testing.T) {
 }
 
 func TestAccAzureRMFirewallNetworkRuleCollection_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_firewall_network_rule_collection", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -401,8 +395,8 @@ func testAccAzureRMFirewallNetworkRuleCollection_basic(data acceptance.TestData)
 
 resource "azurerm_firewall_network_rule_collection" "test" {
   name                = "acctestnrc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 
@@ -435,9 +429,9 @@ func testAccAzureRMFirewallNetworkRuleCollection_requiresImport(data acceptance.
 %s
 
 resource "azurerm_firewall_network_rule_collection" "import" {
-  name                = "${azurerm_firewall_network_rule_collection.test.name}"
-  azure_firewall_name = "${azurerm_firewall_network_rule_collection.test.azure_firewall_name}"
-  resource_group_name = "${azurerm_firewall_network_rule_collection.test.resource_group_name}"
+  name                = azurerm_firewall_network_rule_collection.test.name
+  azure_firewall_name = azurerm_firewall_network_rule_collection.test.azure_firewall_name
+  resource_group_name = azurerm_firewall_network_rule_collection.test.resource_group_name
   priority            = 100
   action              = "Allow"
 
@@ -471,8 +465,8 @@ func testAccAzureRMFirewallNetworkRuleCollection_updatedName(data acceptance.Tes
 
 resource "azurerm_firewall_network_rule_collection" "test" {
   name                = "acctestnrc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 
@@ -506,8 +500,8 @@ func testAccAzureRMFirewallNetworkRuleCollection_multiple(data acceptance.TestDa
 
 resource "azurerm_firewall_network_rule_collection" "test" {
   name                = "acctestnrc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 
@@ -534,8 +528,8 @@ resource "azurerm_firewall_network_rule_collection" "test" {
 
 resource "azurerm_firewall_network_rule_collection" "test_add" {
   name                = "acctestnrc_add"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 200
   action              = "Deny"
 
@@ -569,8 +563,8 @@ func testAccAzureRMFirewallNetworkRuleCollection_multipleUpdate(data acceptance.
 
 resource "azurerm_firewall_network_rule_collection" "test" {
   name                = "acctestnrc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 300
   action              = "Deny"
 
@@ -597,8 +591,8 @@ resource "azurerm_firewall_network_rule_collection" "test" {
 
 resource "azurerm_firewall_network_rule_collection" "test_add" {
   name                = "acctestnrc_add"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 400
   action              = "Allow"
 
@@ -632,8 +626,8 @@ func testAccAzureRMFirewallNetworkRuleCollection_multipleRules(data acceptance.T
 
 resource "azurerm_firewall_network_rule_collection" "test" {
   name                = "acctestnrc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 
@@ -687,8 +681,8 @@ func testAccAzureRMFirewallNetworkRuleCollection_updateFirewallTags(data accepta
 
 resource "azurerm_firewall_network_rule_collection" "test" {
   name                = "acctestnrc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 

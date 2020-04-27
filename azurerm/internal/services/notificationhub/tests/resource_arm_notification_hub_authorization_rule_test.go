@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 )
 
 func TestAccAzureRMNotificationHubAuthorizationRule_listen(t *testing.T) {
@@ -36,11 +35,6 @@ func TestAccAzureRMNotificationHubAuthorizationRule_listen(t *testing.T) {
 }
 
 func TestAccAzureRMNotificationHubAuthorizationRule_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_notification_hub_authorization_rule", "test")
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { acceptance.PreCheck(t) },
@@ -252,9 +246,9 @@ func testAzureRMNotificationHubAuthorizationRule_listen(data acceptance.TestData
 
 resource "azurerm_notification_hub_authorization_rule" "test" {
   name                  = "acctestrule-%d"
-  notification_hub_name = "${azurerm_notification_hub.test.name}"
-  namespace_name        = "${azurerm_notification_hub_namespace.test.name}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  notification_hub_name = azurerm_notification_hub.test.name
+  namespace_name        = azurerm_notification_hub_namespace.test.name
+  resource_group_name   = azurerm_resource_group.test.name
   listen                = true
 }
 `, template, data.RandomInteger)
@@ -266,11 +260,11 @@ func testAzureRMNotificationHubAuthorizationRule_requiresImport(data acceptance.
 %s
 
 resource "azurerm_notification_hub_authorization_rule" "import" {
-  name                  = "${azurerm_notification_hub_authorization_rule.test.name}"
-  notification_hub_name = "${azurerm_notification_hub_authorization_rule.test.notification_hub_name}"
-  namespace_name        = "${azurerm_notification_hub_authorization_rule.test.namespace_name}"
-  resource_group_name   = "${azurerm_notification_hub_authorization_rule.test.resource_group_name}"
-  listen                = "${azurerm_notification_hub_authorization_rule.test.listen}"
+  name                  = azurerm_notification_hub_authorization_rule.test.name
+  notification_hub_name = azurerm_notification_hub_authorization_rule.test.notification_hub_name
+  namespace_name        = azurerm_notification_hub_authorization_rule.test.namespace_name
+  resource_group_name   = azurerm_notification_hub_authorization_rule.test.resource_group_name
+  listen                = azurerm_notification_hub_authorization_rule.test.listen
 }
 `, template)
 }
@@ -282,9 +276,9 @@ func testAzureRMNotificationHubAuthorizationRule_send(data acceptance.TestData) 
 
 resource "azurerm_notification_hub_authorization_rule" "test" {
   name                  = "acctestrule-%d"
-  notification_hub_name = "${azurerm_notification_hub.test.name}"
-  namespace_name        = "${azurerm_notification_hub_namespace.test.name}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  notification_hub_name = azurerm_notification_hub.test.name
+  namespace_name        = azurerm_notification_hub_namespace.test.name
+  resource_group_name   = azurerm_resource_group.test.name
   send                  = true
   listen                = true
 }
@@ -298,31 +292,30 @@ func testAzureRMNotificationHubAuthorizationRule_multi(data acceptance.TestData)
 
 resource "azurerm_notification_hub_authorization_rule" "test1" {
   name                  = "acctestruleone-%d"
-  notification_hub_name = "${azurerm_notification_hub.test.name}"
-  namespace_name        = "${azurerm_notification_hub_namespace.test.name}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  notification_hub_name = azurerm_notification_hub.test.name
+  namespace_name        = azurerm_notification_hub_namespace.test.name
+  resource_group_name   = azurerm_resource_group.test.name
   send                  = true
   listen                = true
 }
 
 resource "azurerm_notification_hub_authorization_rule" "test2" {
   name                  = "acctestruletwo-%d"
-  notification_hub_name = "${azurerm_notification_hub.test.name}"
-  namespace_name        = "${azurerm_notification_hub_namespace.test.name}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  notification_hub_name = azurerm_notification_hub.test.name
+  namespace_name        = azurerm_notification_hub_namespace.test.name
+  resource_group_name   = azurerm_resource_group.test.name
   send                  = true
   listen                = true
 }
 
 resource "azurerm_notification_hub_authorization_rule" "test3" {
   name                  = "acctestrulethree-%d"
-  notification_hub_name = "${azurerm_notification_hub.test.name}"
-  namespace_name        = "${azurerm_notification_hub_namespace.test.name}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  notification_hub_name = azurerm_notification_hub.test.name
+  namespace_name        = azurerm_notification_hub_namespace.test.name
+  resource_group_name   = azurerm_resource_group.test.name
   send                  = true
   listen                = true
 }
-
 `, template, data.RandomInteger, data.RandomInteger, data.RandomInteger)
 }
 
@@ -333,9 +326,9 @@ func testAzureRMNotificationHubAuthorizationRule_manage(data acceptance.TestData
 
 resource "azurerm_notification_hub_authorization_rule" "test" {
   name                  = "acctestrule-%d"
-  notification_hub_name = "${azurerm_notification_hub.test.name}"
-  namespace_name        = "${azurerm_notification_hub_namespace.test.name}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  notification_hub_name = azurerm_notification_hub.test.name
+  namespace_name        = azurerm_notification_hub_namespace.test.name
+  resource_group_name   = azurerm_resource_group.test.name
   manage                = true
   send                  = true
   listen                = true
@@ -345,6 +338,10 @@ resource "azurerm_notification_hub_authorization_rule" "test" {
 
 func testAzureRMNotificationHubAuthorizationRule_template(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -352,20 +349,17 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_notification_hub_namespace" "test" {
   name                = "acctestnhn-%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
   namespace_type      = "NotificationHub"
-
-  sku {
-    name = "Free"
-  }
+  sku_name            = "Free"
 }
 
 resource "azurerm_notification_hub" "test" {
   name                = "acctestnh-%d"
-  namespace_name      = "${azurerm_notification_hub_namespace.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  namespace_name      = azurerm_notification_hub_namespace.test.name
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger)
 }

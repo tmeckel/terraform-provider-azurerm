@@ -26,8 +26,11 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
+// TODO: outside of this pr make this private
+
 var IothubResourceName = "azurerm_iothub"
 
+// nolint unparam
 func suppressIfTypeIsNot(t string) schema.SchemaDiffSuppressFunc {
 	return func(k, old, new string, d *schema.ResourceData) bool {
 		path := strings.Split(k, ".")
@@ -36,6 +39,7 @@ func suppressIfTypeIsNot(t string) schema.SchemaDiffSuppressFunc {
 	}
 }
 
+// nolint unparam
 func supressWhenAll(fs ...schema.SchemaDiffSuppressFunc) schema.SchemaDiffSuppressFunc {
 	return func(k, old, new string, d *schema.ResourceData) bool {
 		for _, f := range fs {
@@ -94,20 +98,7 @@ func resourceArmIotHub() *schema.Resource {
 								string(devices.S1),
 								string(devices.S2),
 								string(devices.S3),
-							}, true), // todo 2.0 make this case sensitive (all constants?)
-						},
-
-						"tier": {
-							Type:             schema.TypeString,
-							Optional:         true,
-							Computed:         true,
-							Deprecated:       "This property is no longer required and will be removed in version 2.0 of the provider",
-							DiffSuppressFunc: suppress.CaseDifference,
-							ValidateFunc: validation.StringInSlice([]string{
-								string(devices.Basic),
-								string(devices.Free),
-								string(devices.Standard),
-							}, true),
+							}, false),
 						},
 
 						"capacity": {
@@ -494,14 +485,10 @@ func resourceArmIotHubCreateUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	if _, ok := d.GetOk("endpoint"); ok {
-		endpoints, err := expandIoTHubEndpoints(d, subscriptionID)
-		if err != nil {
-			return fmt.Errorf("Error expanding `endpoint`: %+v", err)
-		}
-		routingProperties.Endpoints = endpoints
+		routingProperties.Endpoints = expandIoTHubEndpoints(d, subscriptionID)
 	}
 
-	storageEndpoints, messagingEndpoints, enableFileUploadNotifications, err := expandIoTHubFileUpload(d)
+	storageEndpoints, messagingEndpoints, enableFileUploadNotifications := expandIoTHubFileUpload(d)
 	if err != nil {
 		return fmt.Errorf("Error expanding `file_upload`: %+v", err)
 	}
@@ -682,12 +669,7 @@ func waitForIotHubToBeDeleted(ctx context.Context, client *devices.IotHubResourc
 		Pending: []string{"200"},
 		Target:  []string{"404"},
 		Refresh: iothubStateStatusCodeRefreshFunc(ctx, client, resourceGroup, name),
-	}
-
-	if features.SupportsCustomTimeouts() {
-		stateConf.Timeout = d.Timeout(schema.TimeoutDelete)
-	} else {
-		stateConf.Timeout = 40 * time.Minute
+		Timeout: d.Timeout(schema.TimeoutDelete),
 	}
 
 	if _, err := stateConf.WaitForState(); err != nil {
@@ -742,7 +724,7 @@ func expandIoTHubRoutes(d *schema.ResourceData) *[]devices.RouteProperties {
 	return &routeProperties
 }
 
-func expandIoTHubFileUpload(d *schema.ResourceData) (map[string]*devices.StorageEndpointProperties, map[string]*devices.MessagingEndpointProperties, bool, error) {
+func expandIoTHubFileUpload(d *schema.ResourceData) (map[string]*devices.StorageEndpointProperties, map[string]*devices.MessagingEndpointProperties, bool) {
 	fileUploadList := d.Get("file_upload").([]interface{})
 
 	storageEndpointProperties := make(map[string]*devices.StorageEndpointProperties)
@@ -773,10 +755,10 @@ func expandIoTHubFileUpload(d *schema.ResourceData) (map[string]*devices.Storage
 		}
 	}
 
-	return storageEndpointProperties, messagingEndpointProperties, notifications, nil
+	return storageEndpointProperties, messagingEndpointProperties, notifications
 }
 
-func expandIoTHubEndpoints(d *schema.ResourceData, subscriptionId string) (*devices.RoutingEndpoints, error) {
+func expandIoTHubEndpoints(d *schema.ResourceData, subscriptionId string) *devices.RoutingEndpoints {
 	routeEndpointList := d.Get("endpoint").([]interface{})
 
 	serviceBusQueueEndpointProperties := make([]devices.RoutingServiceBusQueueEndpointProperties, 0)
@@ -848,7 +830,7 @@ func expandIoTHubEndpoints(d *schema.ResourceData, subscriptionId string) (*devi
 		ServiceBusTopics:  &serviceBusTopicEndpointProperties,
 		EventHubs:         &eventHubProperties,
 		StorageContainers: &storageContainerProperties,
-	}, nil
+	}
 }
 
 func expandIoTHubFallbackRoute(d *schema.ResourceData) *devices.FallbackRouteProperties {
@@ -885,7 +867,6 @@ func flattenIoTHubSku(input *devices.IotHubSkuInfo) []interface{} {
 	output := make(map[string]interface{})
 
 	output["name"] = string(input.Name)
-	output["tier"] = string(input.Tier)
 	if capacity := input.Capacity; capacity != nil {
 		output["capacity"] = int(*capacity)
 	}

@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -67,11 +66,6 @@ func testAccAzureRMMonitorLogProfile_basic(t *testing.T) {
 }
 
 func testAccAzureRMMonitorLogProfile_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_monitor_log_profile", "test")
 
 	resource.Test(t, resource.TestCase{
@@ -218,6 +212,10 @@ func testCheckAzureRMLogProfileDisappears(resourceName string) resource.TestChec
 
 func testAccAzureRMMonitorLogProfile_basicConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -225,8 +223,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_storage_account" "test" {
   name                     = "acctestsa%s"
-  resource_group_name      = "${azurerm_resource_group.test.name}"
-  location                 = "${azurerm_resource_group.test.location}"
+  resource_group_name      = azurerm_resource_group.test.name
+  location                 = azurerm_resource_group.test.location
   account_tier             = "Standard"
   account_replication_type = "GRS"
 }
@@ -242,7 +240,7 @@ resource "azurerm_monitor_log_profile" "test" {
     "%s",
   ]
 
-  storage_account_id = "${azurerm_storage_account.test.id}"
+  storage_account_id = azurerm_storage_account.test.id
 
   retention_policy {
     enabled = true
@@ -258,10 +256,10 @@ func testAccAzureRMMonitorLogProfile_requiresImportConfig(data acceptance.TestDa
 %s
 
 resource "azurerm_monitor_log_profile" "import" {
-  name               = "${azurerm_monitor_log_profile.test.name}"
-  categories         = "${azurerm_monitor_log_profile.test.categories}"
-  locations          = "${azurerm_monitor_log_profile.test.locations}"
-  storage_account_id = "${azurerm_monitor_log_profile.test.storage_account_id}"
+  name               = azurerm_monitor_log_profile.test.name
+  categories         = azurerm_monitor_log_profile.test.categories
+  locations          = azurerm_monitor_log_profile.test.locations
+  storage_account_id = azurerm_monitor_log_profile.test.storage_account_id
 
   retention_policy {
     enabled = true
@@ -273,6 +271,10 @@ resource "azurerm_monitor_log_profile" "import" {
 
 func testAccAzureRMMonitorLogProfile_servicebusConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -280,15 +282,15 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_servicebus_namespace" "test" {
   name                = "acctestsbns-%s"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   sku                 = "Standard"
 }
 
 resource "azurerm_servicebus_namespace_authorization_rule" "test" {
   name                = "acctestsbrule-%s"
-  namespace_name      = "${azurerm_servicebus_namespace.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  namespace_name      = azurerm_servicebus_namespace.test.name
+  resource_group_name = azurerm_resource_group.test.name
 
   listen = true
   send   = true
@@ -306,7 +308,7 @@ resource "azurerm_monitor_log_profile" "test" {
     "%s",
   ]
 
-  servicebus_rule_id = "${azurerm_servicebus_namespace_authorization_rule.test.id}"
+  servicebus_rule_id = azurerm_servicebus_namespace_authorization_rule.test.id
 
   retention_policy {
     enabled = false
@@ -317,6 +319,10 @@ resource "azurerm_monitor_log_profile" "test" {
 
 func testAccAzureRMMonitorLogProfile_completeConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -324,16 +330,16 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_storage_account" "test" {
   name                     = "acctestsa%s"
-  resource_group_name      = "${azurerm_resource_group.test.name}"
-  location                 = "${azurerm_resource_group.test.location}"
+  resource_group_name      = azurerm_resource_group.test.name
+  location                 = azurerm_resource_group.test.location
   account_tier             = "Standard"
   account_replication_type = "GRS"
 }
 
 resource "azurerm_eventhub_namespace" "test" {
   name                = "acctestehns-%s"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   sku                 = "Standard"
   capacity            = 2
 }
@@ -354,7 +360,7 @@ resource "azurerm_monitor_log_profile" "test" {
 
   # RootManageSharedAccessKey is created by default with listen, send, manage permissions
   servicebus_rule_id = "${azurerm_eventhub_namespace.test.id}/authorizationrules/RootManageSharedAccessKey"
-  storage_account_id = "${azurerm_storage_account.test.id}"
+  storage_account_id = azurerm_storage_account.test.id
 
   retention_policy {
     enabled = true

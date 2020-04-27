@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -32,11 +31,6 @@ func TestAccAzureRMEventHubConsumerGroup_basic(t *testing.T) {
 }
 
 func TestAccAzureRMEventHubConsumerGroup_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_eventhub_consumer_group", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -164,6 +158,10 @@ func testCheckAzureRMEventHubConsumerGroupExists(resourceName string) resource.T
 
 func testAccAzureRMEventHubConsumerGroup_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -171,24 +169,24 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_eventhub_namespace" "test" {
   name                = "acctesteventhubnamespace-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   sku                 = "Standard"
 }
 
 resource "azurerm_eventhub" "test" {
   name                = "acctesteventhub-%d"
-  namespace_name      = "${azurerm_eventhub_namespace.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  namespace_name      = azurerm_eventhub_namespace.test.name
+  resource_group_name = azurerm_resource_group.test.name
   partition_count     = 2
   message_retention   = 7
 }
 
 resource "azurerm_eventhub_consumer_group" "test" {
   name                = "acctesteventhubcg-%d"
-  namespace_name      = "${azurerm_eventhub_namespace.test.name}"
-  eventhub_name       = "${azurerm_eventhub.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  namespace_name      = azurerm_eventhub_namespace.test.name
+  eventhub_name       = azurerm_eventhub.test.name
+  resource_group_name = azurerm_resource_group.test.name
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger)
 }
@@ -199,16 +197,20 @@ func testAccAzureRMEventHubConsumerGroup_requiresImport(data acceptance.TestData
 %s
 
 resource "azurerm_eventhub_consumer_group" "import" {
-  name                = "${azurerm_eventhub_consumer_group.test.name}"
-  namespace_name      = "${azurerm_eventhub_consumer_group.test.namespace_name}"
-  eventhub_name       = "${azurerm_eventhub_consumer_group.test.eventhub_name}"
-  resource_group_name = "${azurerm_eventhub_consumer_group.test.resource_group_name}"
+  name                = azurerm_eventhub_consumer_group.test.name
+  namespace_name      = azurerm_eventhub_consumer_group.test.namespace_name
+  eventhub_name       = azurerm_eventhub_consumer_group.test.eventhub_name
+  resource_group_name = azurerm_eventhub_consumer_group.test.resource_group_name
 }
 `, template)
 }
 
 func testAccAzureRMEventHubConsumerGroup_complete(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -216,24 +218,24 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_eventhub_namespace" "test" {
   name                = "acctesteventhubnamespace-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   sku                 = "Standard"
 }
 
 resource "azurerm_eventhub" "test" {
   name                = "acctesteventhub-%d"
-  namespace_name      = "${azurerm_eventhub_namespace.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  namespace_name      = azurerm_eventhub_namespace.test.name
+  resource_group_name = azurerm_resource_group.test.name
   partition_count     = 2
   message_retention   = 7
 }
 
 resource "azurerm_eventhub_consumer_group" "test" {
   name                = "acctesteventhubcg-%d"
-  namespace_name      = "${azurerm_eventhub_namespace.test.name}"
-  eventhub_name       = "${azurerm_eventhub.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  namespace_name      = azurerm_eventhub_namespace.test.name
+  eventhub_name       = azurerm_eventhub.test.name
+  resource_group_name = azurerm_resource_group.test.name
   user_metadata       = "some-meta-data"
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger)

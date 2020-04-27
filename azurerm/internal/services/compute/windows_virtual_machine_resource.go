@@ -36,7 +36,7 @@ func resourceWindowsVirtualMachine() *schema.Resource {
 		Update: resourceWindowsVirtualMachineUpdate,
 		Delete: resourceWindowsVirtualMachineDelete,
 		Importer: azSchema.ValidateResourceIDPriorToImportThen(func(id string) error {
-			_, err := ParseVirtualMachineID(id)
+			_, err := parse.VirtualMachineID(id)
 			return err
 		}, importVirtualMachine(compute.Windows, "azurerm_windows_virtual_machine")),
 
@@ -72,7 +72,7 @@ func resourceWindowsVirtualMachine() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"network_interface_ids": {
@@ -90,7 +90,7 @@ func resourceWindowsVirtualMachine() *schema.Resource {
 			"size": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			// Optional
@@ -217,10 +217,14 @@ func resourceWindowsVirtualMachine() *schema.Resource {
 			"secret": windowsSecretSchema(),
 
 			"source_image_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ValidateFunc: computeValidate.ImageID,
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				ValidateFunc: validation.Any(
+					computeValidate.ImageID,
+					computeValidate.SharedImageID,
+					computeValidate.SharedImageVersionID,
+				),
 			},
 
 			"source_image_reference": sourceImageReferenceSchema(true),
@@ -490,7 +494,7 @@ func resourceWindowsVirtualMachineRead(d *schema.ResourceData, meta interface{})
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := ParseVirtualMachineID(d.Id())
+	id, err := parse.VirtualMachineID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -588,8 +592,13 @@ func resourceWindowsVirtualMachineRead(d *schema.ResourceData, meta interface{})
 			return fmt.Errorf("Error setting `secret`: %+v", err)
 		}
 	}
-
-	d.Set("priority", string(props.Priority))
+	// Resources created with azurerm_virtual_machine have priority set to ""
+	// We need to treat "" as equal to "Regular" to allow migration azurerm_virtual_machine -> azurerm_linux_virtual_machine
+	priority := string(compute.Regular)
+	if props.Priority != "" {
+		priority = string(props.Priority)
+	}
+	d.Set("priority", priority)
 	proximityPlacementGroupId := ""
 	if props.ProximityPlacementGroup != nil && props.ProximityPlacementGroup.ID != nil {
 		proximityPlacementGroupId = *props.ProximityPlacementGroup.ID
@@ -643,7 +652,7 @@ func resourceWindowsVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := ParseVirtualMachineID(d.Id())
+	id, err := parse.VirtualMachineID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -913,10 +922,10 @@ func resourceWindowsVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 
 func resourceWindowsVirtualMachineDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Compute.VMClient
-	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
+	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := ParseVirtualMachineID(d.Id())
+	id, err := parse.VirtualMachineID(d.Id())
 	if err != nil {
 		return err
 	}

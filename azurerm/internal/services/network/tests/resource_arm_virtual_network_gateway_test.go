@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -33,11 +32,6 @@ func TestAccAzureRMVirtualNetworkGateway_basic(t *testing.T) {
 }
 
 func TestAccAzureRMVirtualNetworkGateway_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_virtual_network_gateway", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -324,6 +318,10 @@ func testCheckAzureRMVirtualNetworkGatewayDestroy(s *terraform.State) error {
 
 func testAccAzureRMVirtualNetworkGateway_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -331,38 +329,38 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestvn-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "GatewaySubnet"
-  resource_group_name  = "${azurerm_resource_group.test.name}"
-  virtual_network_name = "${azurerm_virtual_network.test.name}"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
   address_prefix       = "10.0.1.0/24"
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_virtual_network_gateway" "test" {
   name                = "acctestvng-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   type     = "Vpn"
   vpn_type = "RouteBased"
   sku      = "Basic"
 
   ip_configuration {
-    public_ip_address_id          = "${azurerm_public_ip.test.id}"
+    public_ip_address_id          = azurerm_public_ip.test.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger)
@@ -374,17 +372,17 @@ func testAccAzureRMVirtualNetworkGateway_requiresImport(data acceptance.TestData
 %s
 
 resource "azurerm_virtual_network_gateway" "import" {
-  name                = "${azurerm_virtual_network_gateway.test.name}"
-  location            = "${azurerm_virtual_network_gateway.test.location}"
-  resource_group_name = "${azurerm_virtual_network_gateway.test.resource_group_name}"
-  type                = "${azurerm_virtual_network_gateway.test.type}"
-  vpn_type            = "${azurerm_virtual_network_gateway.test.vpn_type}"
-  sku                 = "${azurerm_virtual_network_gateway.test.sku}"
+  name                = azurerm_virtual_network_gateway.test.name
+  location            = azurerm_virtual_network_gateway.test.location
+  resource_group_name = azurerm_virtual_network_gateway.test.resource_group_name
+  type                = azurerm_virtual_network_gateway.test.type
+  vpn_type            = azurerm_virtual_network_gateway.test.vpn_type
+  sku                 = azurerm_virtual_network_gateway.test.sku
 
   ip_configuration {
-    public_ip_address_id          = "${azurerm_public_ip.test.id}"
+    public_ip_address_id          = azurerm_public_ip.test.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 }
 `, template)
@@ -392,6 +390,10 @@ resource "azurerm_virtual_network_gateway" "import" {
 
 func testAccAzureRMVirtualNetworkGateway_lowerCaseSubnetName(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -399,38 +401,38 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestvn-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "gatewaySubnet"
-  resource_group_name  = "${azurerm_resource_group.test.name}"
-  virtual_network_name = "${azurerm_virtual_network.test.name}"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
   address_prefix       = "10.0.1.0/24"
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_virtual_network_gateway" "test" {
   name                = "acctestvng-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   type     = "Vpn"
   vpn_type = "RouteBased"
   sku      = "Basic"
 
   ip_configuration {
-    public_ip_address_id          = "${azurerm_public_ip.test.id}"
+    public_ip_address_id          = azurerm_public_ip.test.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger)
@@ -438,6 +440,10 @@ resource "azurerm_virtual_network_gateway" "test" {
 
 func testAccAzureRMVirtualNetworkGateway_vpnGw1(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -445,38 +451,38 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestvn-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "GatewaySubnet"
-  resource_group_name  = "${azurerm_resource_group.test.name}"
-  virtual_network_name = "${azurerm_virtual_network.test.name}"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
   address_prefix       = "10.0.1.0/24"
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_virtual_network_gateway" "test" {
   name                = "acctestvng-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   type     = "Vpn"
   vpn_type = "RouteBased"
   sku      = "VpnGw1"
 
   ip_configuration {
-    public_ip_address_id          = "${azurerm_public_ip.test.id}"
+    public_ip_address_id          = azurerm_public_ip.test.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger)
@@ -484,6 +490,10 @@ resource "azurerm_virtual_network_gateway" "test" {
 
 func testAccAzureRMVirtualNetworkGateway_activeActive(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -491,38 +501,41 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestvn-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "GatewaySubnet"
-  resource_group_name  = "${azurerm_resource_group.test.name}"
-  virtual_network_name = "${azurerm_virtual_network.test.name}"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
   address_prefix       = "10.0.1.0/24"
 }
 
 resource "azurerm_public_ip" "first" {
   name                = "acctestpip1-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_public_ip" "second" {
   name = "acctestpip2-%d"
 
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_virtual_network_gateway" "test" {
-  depends_on          = ["azurerm_public_ip.first", "azurerm_public_ip.second"]
+  depends_on = [
+    azurerm_public_ip.first,
+    azurerm_public_ip.second,
+  ]
   name                = "acctestvng-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   type     = "Vpn"
   vpn_type = "RouteBased"
@@ -533,17 +546,17 @@ resource "azurerm_virtual_network_gateway" "test" {
 
   ip_configuration {
     name                 = "gw-ip1"
-    public_ip_address_id = "${azurerm_public_ip.first.id}"
+    public_ip_address_id = azurerm_public_ip.first.id
 
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 
   ip_configuration {
     name                          = "gw-ip2"
-    public_ip_address_id          = "${azurerm_public_ip.second.id}"
+    public_ip_address_id          = azurerm_public_ip.second.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 
   bgp_settings {
@@ -555,6 +568,10 @@ resource "azurerm_virtual_network_gateway" "test" {
 
 func testAccAzureRMVirtualNetworkGateway_vpnClientConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -562,39 +579,39 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestvn-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "GatewaySubnet"
-  resource_group_name  = "${azurerm_resource_group.test.name}"
-  virtual_network_name = "${azurerm_virtual_network.test.name}"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
   address_prefix       = "10.0.1.0/24"
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_virtual_network_gateway" "test" {
-  depends_on          = ["azurerm_public_ip.test"]
+  depends_on          = [azurerm_public_ip.test]
   name                = "acctestvng-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   type     = "Vpn"
   vpn_type = "RouteBased"
   sku      = "VpnGw1"
 
   ip_configuration {
-    public_ip_address_id          = "${azurerm_public_ip.test.id}"
+    public_ip_address_id          = azurerm_public_ip.test.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 
   vpn_client_configuration {
@@ -610,6 +627,10 @@ resource "azurerm_virtual_network_gateway" "test" {
 
 func testAccAzureRMVirtualNetworkGateway_vpnClientConfigOpenVPN(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -617,39 +638,39 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestvn-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "GatewaySubnet"
-  resource_group_name  = "${azurerm_resource_group.test.name}"
-  virtual_network_name = "${azurerm_virtual_network.test.name}"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
   address_prefix       = "10.0.1.0/24"
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_virtual_network_gateway" "test" {
-  depends_on          = ["azurerm_public_ip.test"]
+  depends_on          = [azurerm_public_ip.test]
   name                = "acctestvng-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   type     = "Vpn"
   vpn_type = "RouteBased"
   sku      = "VpnGw1"
 
   ip_configuration {
-    public_ip_address_id          = "${azurerm_public_ip.test.id}"
+    public_ip_address_id          = azurerm_public_ip.test.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 
   vpn_client_configuration {
@@ -662,6 +683,10 @@ resource "azurerm_virtual_network_gateway" "test" {
 
 func testAccAzureRMVirtualNetworkGateway_sku(data acceptance.TestData, sku string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -669,38 +694,38 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestvn-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "GatewaySubnet"
-  resource_group_name  = "${azurerm_resource_group.test.name}"
-  virtual_network_name = "${azurerm_virtual_network.test.name}"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
   address_prefix       = "10.0.1.0/24"
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_virtual_network_gateway" "test" {
   name                = "acctestvng-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   type     = "Vpn"
   vpn_type = "RouteBased"
   sku      = "%s"
 
   ip_configuration {
-    public_ip_address_id          = "${azurerm_public_ip.test.id}"
+    public_ip_address_id          = azurerm_public_ip.test.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger, sku)
@@ -708,6 +733,10 @@ resource "azurerm_virtual_network_gateway" "test" {
 
 func testAccAzureRMVirtualNetworkGateway_enableBgp(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -715,29 +744,29 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestvn-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "GatewaySubnet"
-  resource_group_name  = "${azurerm_resource_group.test.name}"
-  virtual_network_name = "${azurerm_virtual_network.test.name}"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
   address_prefix       = "10.0.1.0/24"
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip1-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_virtual_network_gateway" "test" {
   name                = "acctestvng-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   type       = "Vpn"
   vpn_type   = "RouteBased"
@@ -745,9 +774,9 @@ resource "azurerm_virtual_network_gateway" "test" {
   enable_bgp = true
 
   ip_configuration {
-    public_ip_address_id          = "${azurerm_public_ip.test.id}"
+    public_ip_address_id          = azurerm_public_ip.test.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger)
@@ -755,6 +784,10 @@ resource "azurerm_virtual_network_gateway" "test" {
 
 func testAccAzureRMVirtualNetworkGateway_expressRoute(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -762,38 +795,38 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestvn-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "GatewaySubnet"
-  resource_group_name  = "${azurerm_resource_group.test.name}"
-  virtual_network_name = "${azurerm_virtual_network.test.name}"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
   address_prefix       = "10.0.1.0/24"
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip1-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_virtual_network_gateway" "test" {
   name                = "acctestvng-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   type     = "ExpressRoute"
   vpn_type = "PolicyBased"
   sku      = "Standard"
 
   ip_configuration {
-    public_ip_address_id          = "${azurerm_public_ip.test.id}"
+    public_ip_address_id          = azurerm_public_ip.test.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger)
@@ -801,6 +834,10 @@ resource "azurerm_virtual_network_gateway" "test" {
 
 func testAccAzureRMVirtualNetworkGateway_generation(data acceptance.TestData, generation string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -808,29 +845,29 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_virtual_network" "test" {
   name                = "acctestvn-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "test" {
   name                 = "GatewaySubnet"
-  resource_group_name  = "${azurerm_resource_group.test.name}"
-  virtual_network_name = "${azurerm_virtual_network.test.name}"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
   address_prefix       = "10.0.1.0/24"
 }
 
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_virtual_network_gateway" "test" {
   name                = "acctestvng-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   type       = "Vpn"
   vpn_type   = "RouteBased"
@@ -838,9 +875,9 @@ resource "azurerm_virtual_network_gateway" "test" {
   generation = "%s"
 
   ip_configuration {
-    public_ip_address_id          = "${azurerm_public_ip.test.id}"
+    public_ip_address_id          = azurerm_public_ip.test.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = "${azurerm_subnet.test.id}"
+    subnet_id                     = azurerm_subnet.test.id
   }
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger, generation)

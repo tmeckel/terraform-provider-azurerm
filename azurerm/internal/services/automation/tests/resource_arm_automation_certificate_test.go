@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -41,10 +40,6 @@ func TestAccAzureRMAutomationCertificate_basic(t *testing.T) {
 }
 
 func TestAccAzureRMAutomationCertificate_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_automation_certificate", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -173,6 +168,10 @@ func testCheckAzureRMAutomationCertificateExists(resourceName string) resource.T
 
 func testAccAzureRMAutomationCertificate_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -202,15 +201,18 @@ func testAccAzureRMAutomationCertificate_requiresImport(data acceptance.TestData
 resource "azurerm_automation_certificate" "import" {
   name                    = azurerm_automation_certificate.test.name
   resource_group_name     = azurerm_automation_certificate.test.resource_group_name
-  automation_account_name = azurerm_automation_certificate.test.account_name
+  automation_account_name = azurerm_automation_certificate.test.automation_account_name
   base64                  = azurerm_automation_certificate.test.base64
-  thumbprint              = azurerm_automation_certificate.test.thumbprint
 }
 `, template)
 }
 
 func testAccAzureRMAutomationCertificate_complete(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -235,6 +237,10 @@ resource "azurerm_automation_certificate" "test" {
 
 func testAccAzureRMAutomationCertificate_update(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"

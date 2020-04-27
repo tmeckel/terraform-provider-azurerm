@@ -307,6 +307,10 @@ func testAccAzureRMLinuxVirtualMachineScaleSet_disksOSDisk_diskEncryptionSetDepe
 	location := "westus2"
 
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_resource_group" "test" {
@@ -320,13 +324,15 @@ resource "azurerm_key_vault" "test" {
   resource_group_name         = azurerm_resource_group.test.name
   tenant_id                   = data.azurerm_client_config.current.tenant_id
   sku_name                    = "premium"
+  purge_protection_enabled    = true
+  soft_delete_enabled         = true
   enabled_for_disk_encryption = true
 }
 
 resource "azurerm_key_vault_access_policy" "service-principal" {
   key_vault_id = azurerm_key_vault.test.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azurerm_client_config.current.service_principal_object_id
+  object_id    = data.azurerm_client_config.current.object_id
 
   key_permissions = [
     "create",

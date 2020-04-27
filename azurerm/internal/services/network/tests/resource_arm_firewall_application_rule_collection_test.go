@@ -6,7 +6,6 @@ import (
 
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-09-01/network"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -43,11 +42,6 @@ func TestAccAzureRMFirewallApplicationRuleCollection_basic(t *testing.T) {
 }
 
 func TestAccAzureRMFirewallApplicationRuleCollection_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_firewall_application_rule_collection", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -495,8 +489,8 @@ func testAccAzureRMFirewallApplicationRuleCollection_basic(data acceptance.TestD
 
 resource "azurerm_firewall_application_rule_collection" "test" {
   name                = "acctestarc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 
@@ -526,9 +520,9 @@ func testAccAzureRMFirewallApplicationRuleCollection_requiresImport(data accepta
 %s
 
 resource "azurerm_firewall_application_rule_collection" "import" {
-  name                = "${azurerm_firewall_application_rule_collection.test.name}"
-  azure_firewall_name = "${azurerm_firewall_application_rule_collection.test.azure_firewall_name}"
-  resource_group_name = "${azurerm_firewall_application_rule_collection.test.resource_group_name}"
+  name                = azurerm_firewall_application_rule_collection.test.name
+  azure_firewall_name = azurerm_firewall_application_rule_collection.test.azure_firewall_name
+  resource_group_name = azurerm_firewall_application_rule_collection.test.resource_group_name
   priority            = 100
   action              = "Allow"
 
@@ -559,8 +553,8 @@ func testAccAzureRMFirewallApplicationRuleCollection_updatedName(data acceptance
 
 resource "azurerm_firewall_application_rule_collection" "test" {
   name                = "acctestarc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 
@@ -591,8 +585,8 @@ func testAccAzureRMFirewallApplicationRuleCollection_multiple(data acceptance.Te
 
 resource "azurerm_firewall_application_rule_collection" "test" {
   name                = "acctestarc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 
@@ -616,8 +610,8 @@ resource "azurerm_firewall_application_rule_collection" "test" {
 
 resource "azurerm_firewall_application_rule_collection" "test_add" {
   name                = "acctestarc_add"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 200
   action              = "Deny"
 
@@ -648,8 +642,8 @@ func testAccAzureRMFirewallApplicationRuleCollection_multipleUpdate(data accepta
 
 resource "azurerm_firewall_application_rule_collection" "test" {
   name                = "acctestarc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 300
   action              = "Deny"
 
@@ -673,8 +667,8 @@ resource "azurerm_firewall_application_rule_collection" "test" {
 
 resource "azurerm_firewall_application_rule_collection" "test_add" {
   name                = "acctestarc_add"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 400
   action              = "Allow"
 
@@ -705,8 +699,8 @@ func testAccAzureRMFirewallApplicationRuleCollection_multipleRules(data acceptan
 
 resource "azurerm_firewall_application_rule_collection" "test" {
   name                = "acctestarc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 
@@ -754,8 +748,8 @@ func testAccAzureRMFirewallApplicationRuleCollection_multipleProtocols(data acce
 
 resource "azurerm_firewall_application_rule_collection" "test" {
   name                = "acctestarc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 
@@ -791,8 +785,8 @@ func testAccAzureRMFirewallApplicationRuleCollection_multipleProtocolsUpdate(dat
 
 resource "azurerm_firewall_application_rule_collection" "test" {
   name                = "acctestarc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 
@@ -828,8 +822,8 @@ func testAccAzureRMFirewallApplicationRuleCollection_updateFirewallTags(data acc
 
 resource "azurerm_firewall_application_rule_collection" "test" {
   name                = "acctestarc"
-  azure_firewall_name = "${azurerm_firewall.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  azure_firewall_name = azurerm_firewall.test.name
+  resource_group_name = azurerm_resource_group.test.name
   priority            = 100
   action              = "Allow"
 

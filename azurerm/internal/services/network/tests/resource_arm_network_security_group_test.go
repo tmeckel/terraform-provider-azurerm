@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -32,11 +31,6 @@ func TestAccAzureRMNetworkSecurityGroup_basic(t *testing.T) {
 }
 
 func TestAccAzureRMNetworkSecurityGroup_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_network_security_group", "test")
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { acceptance.PreCheck(t) },
@@ -316,6 +310,10 @@ func testCheckAzureRMNetworkSecurityGroupDestroy(s *terraform.State) error {
 
 func testAccAzureRMNetworkSecurityGroup_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -323,8 +321,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_network_security_group" "test" {
   name                = "acceptanceTestSecurityGroup1"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 }
 `, data.RandomInteger, data.Locations.Primary)
 }
@@ -335,15 +333,19 @@ func testAccAzureRMNetworkSecurityGroup_requiresImport(data acceptance.TestData)
 %s
 
 resource "azurerm_network_security_group" "test" {
-  name                = "${azurerm_network_security_group.test.name}"
-  location            = "${azurerm_network_security_group.test.location}"
-  resource_group_name = "${azurerm_network_security_group.test.resource_group_name}"
+  name                = azurerm_network_security_group.test.name
+  location            = azurerm_network_security_group.test.location
+  resource_group_name = azurerm_network_security_group.test.resource_group_name
 }
 `, template)
 }
 
 func testAccAzureRMNetworkSecurityGroup_rulesExplicitZero(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -351,8 +353,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_network_security_group" "test" {
   name                = "acceptanceTestSecurityGroup1"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   security_rule = []
 }
@@ -361,6 +363,10 @@ resource "azurerm_network_security_group" "test" {
 
 func testAccAzureRMNetworkSecurityGroup_singleRule(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -368,8 +374,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_network_security_group" "test" {
   name                = "acceptanceTestSecurityGroup1"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   security_rule {
     name                       = "test123"
@@ -388,6 +394,10 @@ resource "azurerm_network_security_group" "test" {
 
 func testAccAzureRMNetworkSecurityGroup_anotherRule(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -395,8 +405,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_network_security_group" "test" {
   name                = "acceptanceTestSecurityGroup1"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   security_rule {
     name                       = "test123"
@@ -427,6 +437,10 @@ resource "azurerm_network_security_group" "test" {
 
 func testAccAzureRMNetworkSecurityGroup_withTags(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -434,8 +448,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_network_security_group" "test" {
   name                = "acceptanceTestSecurityGroup1"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   security_rule {
     name                       = "test123"
@@ -459,6 +473,10 @@ resource "azurerm_network_security_group" "test" {
 
 func testAccAzureRMNetworkSecurityGroup_withTagsUpdate(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -466,8 +484,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_network_security_group" "test" {
   name                = "acceptanceTestSecurityGroup1"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   security_rule {
     name                       = "test123"
@@ -490,6 +508,10 @@ resource "azurerm_network_security_group" "test" {
 
 func testAccAzureRMNetworkSecurityGroup_augmented(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -497,8 +519,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_network_security_group" "test" {
   name                = "acceptanceTestSecurityGroup1"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   security_rule {
     name                         = "test123"
@@ -517,6 +539,10 @@ resource "azurerm_network_security_group" "test" {
 
 func testAccAzureRMNetworkSecurityGroup_applicationSecurityGroup(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -524,20 +550,20 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_application_security_group" "first" {
   name                = "acctest-first%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 }
 
 resource "azurerm_application_security_group" "second" {
   name                = "acctest-second%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 }
 
 resource "azurerm_network_security_group" "test" {
   name                = "acctestnsg-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   security_rule {
     name                                       = "test123"
@@ -545,8 +571,8 @@ resource "azurerm_network_security_group" "test" {
     direction                                  = "Inbound"
     access                                     = "Allow"
     protocol                                   = "Tcp"
-    source_application_security_group_ids      = ["${azurerm_application_security_group.first.id}"]
-    destination_application_security_group_ids = ["${azurerm_application_security_group.second.id}"]
+    source_application_security_group_ids      = [azurerm_application_security_group.first.id]
+    destination_application_security_group_ids = [azurerm_application_security_group.second.id]
     source_port_ranges                         = ["10000-40000"]
     destination_port_ranges                    = ["80", "443", "8080", "8190"]
   }

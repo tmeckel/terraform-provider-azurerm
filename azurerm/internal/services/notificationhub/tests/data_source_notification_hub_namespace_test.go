@@ -20,6 +20,7 @@ func TestAccDataSourceAzureRMNotificationHubNamespace_free(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(data.ResourceName, "namespace_type", "NotificationHub"),
 					resource.TestCheckResourceAttr(data.ResourceName, "sku.0.name", "Free"),
+					resource.TestCheckResourceAttr(data.ResourceName, "tags.%", "1"),
 				),
 			},
 		},
@@ -32,8 +33,8 @@ func testAccDataSourceAzureRMNotificationHubNamespaceFree(data acceptance.TestDa
 %s
 
 data "azurerm_notification_hub_namespace" "test" {
-  name                = "${azurerm_notification_hub_namespace.test.name}"
-  resource_group_name = "${azurerm_notification_hub_namespace.test.resource_group_name}"
+  name                = azurerm_notification_hub_namespace.test.name
+  resource_group_name = azurerm_notification_hub_namespace.test.resource_group_name
 }
 `, template)
 }

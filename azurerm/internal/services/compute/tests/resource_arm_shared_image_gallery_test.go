@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -33,10 +32,6 @@ func TestAccAzureRMSharedImageGallery_basic(t *testing.T) {
 	})
 }
 func TestAccAzureRMSharedImageGallery_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_shared_image_gallery", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -142,6 +137,10 @@ func testCheckAzureRMSharedImageGalleryExists(resourceName string) resource.Test
 
 func testAccAzureRMSharedImageGallery_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -149,8 +148,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_shared_image_gallery" "test" {
   name                = "acctestsig%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
 }
@@ -160,15 +159,19 @@ func testAccAzureRMSharedImageGallery_requiresImport(data acceptance.TestData) s
 %s
 
 resource "azurerm_shared_image_gallery" "import" {
-  name                = "${azurerm_shared_image_gallery.test.name}"
-  resource_group_name = "${azurerm_shared_image_gallery.test.resource_group_name}"
-  location            = "${azurerm_shared_image_gallery.test.location}"
+  name                = azurerm_shared_image_gallery.test.name
+  resource_group_name = azurerm_shared_image_gallery.test.resource_group_name
+  location            = azurerm_shared_image_gallery.test.location
 }
 `, testAccAzureRMSharedImageGallery_basic(data))
 }
 
 func testAccAzureRMSharedImageGallery_complete(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -176,8 +179,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_shared_image_gallery" "test" {
   name                = "acctestsig%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
   description         = "Shared images and things."
 
   tags = {

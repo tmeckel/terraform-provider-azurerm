@@ -13,6 +13,10 @@ Use this data source to access information about a Policy Definition, both custo
 ## Example Usage
 
 ```hcl
+provider "azurerm" {
+  features {}
+}
+
 data "azurerm_policy_definition" "example" {
   display_name = "Allowed resource types"
 }
@@ -24,24 +28,31 @@ output "id" {
 
 ## Argument Reference
 
-* `display_name` - Specifies the name of the Policy Definition.
-* `management_group_id` - (Optional) Only retrieve Policy Definitions from this Management Group.
+* `name` - Specifies the name of the Policy Definition. Conflicts with `display_name`.
 
+* `display_name` - Specifies the display name of the Policy Definition. Conflicts with `name`.
+
+~> **NOTE** As `display_name` is not unique errors may occur when there are multiple policy definitions with same display name. 
+
+* `management_group_name` - (Optional) Only retrieve Policy Definitions from this Management Group.
 
 ## Attributes Reference
 
 * `id` - The ID of the Policy Definition.
-* `name` - The Name of the Policy Definition.
+
 * `type` - The Type of Policy.
+
 * `description` - The Description of the Policy.
-* `policy_type` - The Type of the Policy, such as `Microsoft.Authorization/policyDefinitions`.
+
+* `policy_type` - The Type of the Policy. Possible values are "BuiltIn", "Custom" and "NotSpecified".
+
 * `policy_rule` - The Rule as defined (in JSON) in the Policy.
+
 * `parameters` - Any Parameters defined in the Policy.
+
 * `metadata` - Any Metadata defined in the Policy.
 
-### Timeouts
-
-~> **Note:** Custom Timeouts are available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+## Timeouts
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 

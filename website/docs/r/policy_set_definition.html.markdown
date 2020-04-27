@@ -15,6 +15,10 @@ Manages a policy set definition.
 ## Example Usage
 
 ```hcl
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_policy_set_definition" "example" {
   name         = "testPolicySet"
   policy_type  = "Custom"
@@ -33,7 +37,6 @@ resource "azurerm_policy_set_definition" "example" {
     }
 PARAMETERS
 
-
   policy_definitions = <<POLICY_DEFINITIONS
     [
         {
@@ -46,7 +49,6 @@ PARAMETERS
         }
     ]
 POLICY_DEFINITIONS
-
 }
 ```
 
@@ -60,7 +62,7 @@ The following arguments are supported:
 
 * `display_name` - (Required) The display name of the policy set definition.
 
-* `policy_definitions` - (Required) The policy definitions for the policy set definition. This is a json object representing the bundled policy definitions .
+* `policy_definitions` - (Required) The policy definitions for the policy set definition. This is a json object representing the bundled policy definitions.
 
 * `description` - (Optional) The description of the policy set definition.
 
@@ -78,9 +80,7 @@ The following attributes are exported:
 
 * `id` - The ID of the Policy Set Definition.
 
-### Timeouts
-
-~> **Note:** Custom Timeouts are available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+## Timeouts
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 
@@ -98,5 +98,5 @@ terraform import azurerm_policy_set_definition.example /subscriptions/00000000-0
 ```
 or
 ```shell
-terraform import azurerm_policy_set_definition.example/providers/Microsoft.Management/managementgroups/my-mgmt-group-id/providers/Microsoft.Authorization/policySetDefinitions/testPolicySet
+terraform import azurerm_policy_set_definition.example /providers/Microsoft.Management/managementGroups/my-mgmt-group-id/providers/Microsoft.Authorization/policySetDefinitions/testPolicySet
 ```

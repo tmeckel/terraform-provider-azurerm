@@ -11,7 +11,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 )
 
 func TestAccAzureRMUserAssignedIdentity_basic(t *testing.T) {
@@ -35,11 +34,6 @@ func TestAccAzureRMUserAssignedIdentity_basic(t *testing.T) {
 	})
 }
 func TestAccAzureRMUserAssignedIdentity_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_user_assigned_identity", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -123,6 +117,10 @@ func testCheckAzureRMUserAssignedIdentityDestroy(s *terraform.State) error {
 
 func testAccAzureRMUserAssignedIdentity_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -130,8 +128,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_user_assigned_identity" "test" {
   name                = "acctest%s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomString)
 }
@@ -141,9 +139,9 @@ func testAccAzureRMUserAssignedIdentity_requiresImport(data acceptance.TestData)
 %s
 
 resource "azurerm_user_assigned_identity" "import" {
-  name                = "${azurerm_user_assigned_identity.test.name}"
-  resource_group_name = "${azurerm_user_assigned_identity.test.resource_group_name}"
-  location            = "${azurerm_user_assigned_identity.test.location}"
+  name                = azurerm_user_assigned_identity.test.name
+  resource_group_name = azurerm_user_assigned_identity.test.resource_group_name
+  location            = azurerm_user_assigned_identity.test.location
 }
 `, testAccAzureRMUserAssignedIdentity_basic(data))
 }

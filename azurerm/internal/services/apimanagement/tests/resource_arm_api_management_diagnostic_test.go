@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -32,10 +31,6 @@ func TestAccAzureRMApiManagementDiagnostic_basic(t *testing.T) {
 }
 
 func TestAccAzureRMApiManagementDiagnostic_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_api_management_diagnostic", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -108,6 +103,10 @@ func testCheckAzureRMApiManagementDiagnosticExists(resourceName string) resource
 
 func testAccAzureRMApiManagementDiagnostic_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -115,8 +114,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_api_management" "test" {
   name                = "acctestAM-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   publisher_name      = "pub1"
   publisher_email     = "pub1@email.com"
   sku_name            = "Developer_1"
@@ -124,8 +123,8 @@ resource "azurerm_api_management" "test" {
 
 resource "azurerm_api_management_diagnostic" "test" {
   identifier          = "applicationinsights"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  api_management_name = azurerm_api_management.test.name
   enabled             = true
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
@@ -137,10 +136,10 @@ func testAccAzureRMApiManagementDiagnostic_requiresImport(data acceptance.TestDa
 %s
 
 resource "azurerm_api_management_diagnostic" "import" {
-  identifier          = "${azurerm_api_management_diagnostic.test.identifier}"
-  resource_group_name = "${azurerm_api_management_diagnostic.test.resource_group_name}"
-  api_management_name = "${azurerm_api_management_diagnostic.test.api_management_name}"
-  enabled             = "${azurerm_api_management_diagnostic.test.enabled}"
+  identifier          = azurerm_api_management_diagnostic.test.identifier
+  resource_group_name = azurerm_api_management_diagnostic.test.resource_group_name
+  api_management_name = azurerm_api_management_diagnostic.test.api_management_name
+  enabled             = azurerm_api_management_diagnostic.test.enabled
 }
 `, template)
 }

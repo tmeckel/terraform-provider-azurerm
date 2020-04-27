@@ -9,13 +9,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
 func TestAccAzureRMMonitorDiagnosticSetting_eventhub(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_monitor_diagnostic_setting", "test")
-
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { acceptance.PreCheck(t) },
 		Providers:    acceptance.SupportedProviders,
@@ -39,11 +37,6 @@ func TestAccAzureRMMonitorDiagnosticSetting_eventhub(t *testing.T) {
 }
 
 func TestAccAzureRMMonitorDiagnosticSetting_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_monitor_diagnostic_setting", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -104,9 +97,6 @@ func TestAccAzureRMMonitorDiagnosticSetting_logAnalyticsWorkspaceDedicated(t *te
 					resource.TestCheckResourceAttrSet(data.ResourceName, "log_analytics_workspace_id"),
 					resource.TestCheckResourceAttr(data.ResourceName, "log_analytics_destination_type", "Dedicated"),
 					resource.TestCheckResourceAttr(data.ResourceName, "log.#", "3"),
-					resource.TestCheckResourceAttr(data.ResourceName, "log.3188484811.category", "ActivityRuns"),
-					resource.TestCheckResourceAttr(data.ResourceName, "log.595859111.category", "PipelineRuns"),
-					resource.TestCheckResourceAttr(data.ResourceName, "log.2542277390.category", "TriggerRuns"),
 					resource.TestCheckResourceAttr(data.ResourceName, "metric.#", "1"),
 					resource.TestCheckResourceAttr(data.ResourceName, "metric.4109484471.category", "AllMetrics"),
 				),
@@ -133,6 +123,28 @@ func TestAccAzureRMMonitorDiagnosticSetting_storageAccount(t *testing.T) {
 					resource.TestCheckResourceAttr(data.ResourceName, "log.782743152.category", "AuditEvent"),
 					resource.TestCheckResourceAttr(data.ResourceName, "metric.#", "1"),
 					resource.TestCheckResourceAttr(data.ResourceName, "metric.1439188313.category", "AllMetrics"),
+				),
+			},
+			data.ImportStep(),
+		},
+	})
+}
+
+func TestAccAzureRMMonitorDiagnosticSetting_activityLog(t *testing.T) {
+	data := acceptance.BuildTestData(t, "azurerm_monitor_diagnostic_setting", "test")
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:     func() { acceptance.PreCheck(t) },
+		Providers:    acceptance.SupportedProviders,
+		CheckDestroy: testCheckAzureRMMonitorDiagnosticSettingDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAzureRMMonitorDiagnosticSetting_activityLog(data),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckAzureRMMonitorDiagnosticSettingExists(data.ResourceName),
+					resource.TestCheckResourceAttrSet(data.ResourceName, "storage_account_id"),
+					resource.TestCheckResourceAttr(data.ResourceName, "log.#", "1"),
+					resource.TestCheckResourceAttr(data.ResourceName, "log.782743152.category", "Administrative"),
 				),
 			},
 			data.ImportStep(),
@@ -196,7 +208,12 @@ func testCheckAzureRMMonitorDiagnosticSettingDestroy(s *terraform.State) error {
 
 func testAccAzureRMMonitorDiagnosticSetting_eventhub(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%[1]d"
@@ -205,23 +222,23 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_eventhub_namespace" "test" {
   name                = "acctest-EHN-%[1]d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   sku                 = "Basic"
 }
 
 resource "azurerm_eventhub" "test" {
   name                = "acctest-EH-%[1]d"
-  namespace_name      = "${azurerm_eventhub_namespace.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  namespace_name      = azurerm_eventhub_namespace.test.name
+  resource_group_name = azurerm_resource_group.test.name
   partition_count     = 2
   message_retention   = 1
 }
 
 resource "azurerm_eventhub_namespace_authorization_rule" "test" {
   name                = "example"
-  namespace_name      = "${azurerm_eventhub_namespace.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  namespace_name      = azurerm_eventhub_namespace.test.name
+  resource_group_name = azurerm_resource_group.test.name
   listen              = true
   send                = true
   manage              = true
@@ -229,17 +246,17 @@ resource "azurerm_eventhub_namespace_authorization_rule" "test" {
 
 resource "azurerm_key_vault" "test" {
   name                = "acctest%[3]d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 }
 
 resource "azurerm_monitor_diagnostic_setting" "test" {
   name                           = "acctest-DS-%[1]d"
-  target_resource_id             = "${azurerm_key_vault.test.id}"
-  eventhub_authorization_rule_id = "${azurerm_eventhub_namespace_authorization_rule.test.id}"
-  eventhub_name                  = "${azurerm_eventhub.test.name}"
+  target_resource_id             = azurerm_key_vault.test.id
+  eventhub_authorization_rule_id = azurerm_eventhub_namespace_authorization_rule.test.id
+  eventhub_name                  = azurerm_eventhub.test.name
 
   log {
     category = "AuditEvent"
@@ -267,10 +284,10 @@ func testAccAzureRMMonitorDiagnosticSetting_requiresImport(data acceptance.TestD
 %s
 
 resource "azurerm_monitor_diagnostic_setting" "import" {
-  name                           = "${azurerm_monitor_diagnostic_setting.test.name}"
-  target_resource_id             = "${azurerm_monitor_diagnostic_setting.test.target_resource_id}"
-  eventhub_authorization_rule_id = "${azurerm_monitor_diagnostic_setting.test.eventhub_authorization_rule_id}"
-  eventhub_name                  = "${azurerm_monitor_diagnostic_setting.test.eventhub_name}"
+  name                           = azurerm_monitor_diagnostic_setting.test.name
+  target_resource_id             = azurerm_monitor_diagnostic_setting.test.target_resource_id
+  eventhub_authorization_rule_id = azurerm_monitor_diagnostic_setting.test.eventhub_authorization_rule_id
+  eventhub_name                  = azurerm_monitor_diagnostic_setting.test.eventhub_name
 
   log {
     category = "AuditEvent"
@@ -294,7 +311,12 @@ resource "azurerm_monitor_diagnostic_setting" "import" {
 
 func testAccAzureRMMonitorDiagnosticSetting_logAnalyticsWorkspace(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%[1]d"
@@ -303,24 +325,24 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_log_analytics_workspace" "test" {
   name                = "acctest-LAW-%[1]d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   sku                 = "PerGB2018"
   retention_in_days   = 30
 }
 
 resource "azurerm_key_vault" "test" {
   name                = "acctest%[3]d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 }
 
 resource "azurerm_monitor_diagnostic_setting" "test" {
   name                       = "acctest-DS-%[1]d"
-  target_resource_id         = "${azurerm_key_vault.test.id}"
-  log_analytics_workspace_id = "${azurerm_log_analytics_workspace.test.id}"
+  target_resource_id         = azurerm_key_vault.test.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.test.id
 
   log {
     category = "AuditEvent"
@@ -344,7 +366,12 @@ resource "azurerm_monitor_diagnostic_setting" "test" {
 
 func testAccAzureRMMonitorDiagnosticSetting_logAnalyticsWorkspaceDedicated(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%[1]d"
@@ -353,22 +380,22 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_log_analytics_workspace" "test" {
   name                = "acctest-LAW-%[1]d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   sku                 = "PerGB2018"
   retention_in_days   = 30
 }
 
 resource "azurerm_data_factory" "test" {
   name                = "acctest-DF-%[1]d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 }
 
 resource "azurerm_monitor_diagnostic_setting" "test" {
   name                       = "acctest-DS-%[1]d"
-  target_resource_id         = "${azurerm_data_factory.test.id}"
-  log_analytics_workspace_id = "${azurerm_log_analytics_workspace.test.id}"
+  target_resource_id         = azurerm_data_factory.test.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.test.id
 
   log_analytics_destination_type = "Dedicated"
 
@@ -412,7 +439,12 @@ resource "azurerm_monitor_diagnostic_setting" "test" {
 
 func testAccAzureRMMonitorDiagnosticSetting_storageAccount(data acceptance.TestData) string {
 	return fmt.Sprintf(`
-data "azurerm_client_config" "current" {}
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
 
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%[1]d"
@@ -421,24 +453,24 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_storage_account" "test" {
   name                     = "acctest%[3]d"
-  resource_group_name      = "${azurerm_resource_group.test.name}"
-  location                 = "${azurerm_resource_group.test.location}"
+  resource_group_name      = azurerm_resource_group.test.name
+  location                 = azurerm_resource_group.test.location
   account_replication_type = "LRS"
   account_tier             = "Standard"
 }
 
 resource "azurerm_key_vault" "test" {
   name                = "acctest%[3]d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 }
 
 resource "azurerm_monitor_diagnostic_setting" "test" {
   name               = "acctest-DS-%[1]d"
-  target_resource_id = "${azurerm_key_vault.test.id}"
-  storage_account_id = "${azurerm_storage_account.test.id}"
+  target_resource_id = azurerm_key_vault.test.id
+  storage_account_id = azurerm_storage_account.test.id
 
   log {
     category = "AuditEvent"
@@ -455,6 +487,47 @@ resource "azurerm_monitor_diagnostic_setting" "test" {
     retention_policy {
       enabled = false
     }
+  }
+}
+`, data.RandomInteger, data.Locations.Primary, data.RandomIntOfLength(17))
+}
+
+func testAccAzureRMMonitorDiagnosticSetting_activityLog(data acceptance.TestData) string {
+	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_client_config" "current" {
+}
+
+
+data "azurerm_subscription" "current" {
+}
+
+
+resource "azurerm_resource_group" "test" {
+  name     = "acctestRG-%[1]d"
+  location = "%[2]s"
+}
+
+resource "azurerm_storage_account" "test" {
+  name                     = "acctest%[3]d"
+  resource_group_name      = azurerm_resource_group.test.name
+  location                 = azurerm_resource_group.test.location
+  account_replication_type = "LRS"
+  account_tier             = "Standard"
+}
+
+
+resource "azurerm_monitor_diagnostic_setting" "test" {
+  name               = "acctest-DS-%[1]d"
+  target_resource_id = data.azurerm_subscription.current.id
+  storage_account_id = azurerm_storage_account.test.id
+
+  log {
+    category = "Administrative"
+    enabled  = true
   }
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomIntOfLength(17))

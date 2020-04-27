@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -59,11 +58,6 @@ func testAccAzureRMNetAppAccount_basic(t *testing.T) {
 }
 
 func testAccAzureRMNetAppAccount_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_netapp_account", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -98,6 +92,8 @@ func testAccAzureRMNetAppAccount_complete(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testCheckAzureRMNetAppAccountExists(data.ResourceName),
 					resource.TestCheckResourceAttr(data.ResourceName, "active_directory.#", "1"),
+					resource.TestCheckResourceAttr(data.ResourceName, "tags.%", "1"),
+					resource.TestCheckResourceAttr(data.ResourceName, "tags.FoO", "BaR"),
 				),
 			},
 			data.ImportStep("active_directory"),
@@ -118,6 +114,7 @@ func testAccAzureRMNetAppAccount_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testCheckAzureRMNetAppAccountExists(data.ResourceName),
 					resource.TestCheckResourceAttr(data.ResourceName, "active_directory.#", "0"),
+					resource.TestCheckResourceAttr(data.ResourceName, "tags.%", "0"),
 				),
 			},
 			{
@@ -125,6 +122,8 @@ func testAccAzureRMNetAppAccount_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testCheckAzureRMNetAppAccountExists(data.ResourceName),
 					resource.TestCheckResourceAttr(data.ResourceName, "active_directory.#", "1"),
+					resource.TestCheckResourceAttr(data.ResourceName, "tags.%", "1"),
+					resource.TestCheckResourceAttr(data.ResourceName, "tags.FoO", "BaR"),
 				),
 			},
 			data.ImportStep("active_directory"),
@@ -182,6 +181,10 @@ func testCheckAzureRMNetAppAccountDestroy(s *terraform.State) error {
 
 func testAccAzureRMNetAppAccount_basicConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-netapp-%d"
   location = "%s"
@@ -189,8 +192,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_netapp_account" "test" {
   name                = "acctest-NetAppAccount-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
 }
@@ -199,15 +202,19 @@ func testAccAzureRMNetAppAccount_requiresImportConfig(data acceptance.TestData) 
 	return fmt.Sprintf(`
 %s
 resource "azurerm_netapp_account" "import" {
-  name                = "${azurerm_netapp_account.test.name}"
-  location            = "${azurerm_netapp_account.test.location}"
-  resource_group_name = "${azurerm_netapp_account.test.resource_group_name}"
+  name                = azurerm_netapp_account.test.name
+  location            = azurerm_netapp_account.test.location
+  resource_group_name = azurerm_netapp_account.test.resource_group_name
 }
 `, testAccAzureRMNetAppAccount_basicConfig(data))
 }
 
 func testAccAzureRMNetAppAccount_completeConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-netapp-%d"
   location = "%s"
@@ -215,8 +222,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_netapp_account" "test" {
   name                = "acctest-NetAppAccount-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   active_directory {
     username            = "aduser"
@@ -225,6 +232,10 @@ resource "azurerm_netapp_account" "test" {
     dns_servers         = ["1.2.3.4"]
     domain              = "westcentralus.com"
     organizational_unit = "OU=FirstLevel"
+  }
+
+  tags = {
+    "FoO" = "BaR"
   }
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger)

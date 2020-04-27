@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 )
 
 func TestAccAzureRMLogicAppActionCustom_basic(t *testing.T) {
@@ -29,11 +28,6 @@ func TestAccAzureRMLogicAppActionCustom_basic(t *testing.T) {
 }
 
 func TestAccAzureRMLogicAppActionCustom_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_logic_app_action_custom", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -62,7 +56,7 @@ func testAccAzureRMLogicAppActionCustom_basic(data acceptance.TestData) string {
 
 resource "azurerm_logic_app_action_custom" "test" {
   name         = "action%d"
-  logic_app_id = "${azurerm_logic_app_workflow.test.id}"
+  logic_app_id = azurerm_logic_app_workflow.test.id
 
   body = <<BODY
 {
@@ -80,6 +74,7 @@ resource "azurerm_logic_app_action_custom" "test" {
     "type": "InitializeVariable"
 }
 BODY
+
 }
 `, template, data.RandomInteger)
 }
@@ -90,15 +85,19 @@ func testAccAzureRMLogicAppActionCustom_requiresImport(data acceptance.TestData)
 %s
 
 resource "azurerm_logic_app_action_custom" "import" {
-  name         = "${azurerm_logic_app_action_custom.test.name}"
-  logic_app_id = "${azurerm_logic_app_action_custom.test.logic_app_id}"
-  body         = "${azurerm_logic_app_action_custom.test.body}"
+  name         = azurerm_logic_app_action_custom.test.name
+  logic_app_id = azurerm_logic_app_action_custom.test.logic_app_id
+  body         = azurerm_logic_app_action_custom.test.body
 }
 `, template)
 }
 
 func testAccAzureRMLogicAppActionCustom_template(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -106,8 +105,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_logic_app_workflow" "test" {
   name                = "acctestlaw-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
 }

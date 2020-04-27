@@ -28,7 +28,6 @@ resource "azurerm_storage_account" "example" {
 
 resource "azurerm_storage_container" "example" {
   name                  = "hdinsight"
-  resource_group_name   = azurerm_resource_group.example.name
   storage_account_name  = azurerm_storage_account.example.name
   container_access_type = "private"
 }
@@ -103,6 +102,9 @@ The following arguments are supported:
 
 * `tier` - (Required) Specifies the Tier which should be used for this HDInsight Interactive Query Cluster. Possible values are `Standard` or `Premium`. Changing this forces a new resource to be created.
 
+* `min_tls_version` - (Optional) The minimal supported TLS version. Possible values are 1.0, 1.1 or 1.2. Changing this forces a new resource to be created.
+
+~> **NOTE:** Starting on June 30, 2020, Azure HDInsight will enforce TLS 1.2 or later versions for all HTTPS connections. For more information, see [Azure HDInsight TLS 1.2 Enforcement](https://azure.microsoft.com/en-us/updates/azure-hdinsight-tls-12-enforcement/).
 ---
 
 * `tags` - (Optional) A map of Tags which should be assigned to this HDInsight Interactive Query Cluster.
@@ -243,9 +245,9 @@ The following attributes are exported:
 
 * `ssh_endpoint` - The SSH Connectivity Endpoint for this HDInsight Interactive Query Cluster.
 
-### Timeouts
+## Timeouts
 
-~> **Note:** Custom Timeouts is available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 

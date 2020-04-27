@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -32,10 +31,6 @@ func TestAccAzureRMApiManagementApiOperation_basic(t *testing.T) {
 }
 
 func TestAccAzureRMApiManagementApiOperation_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_api_management_api_operation", "test")
 
 	resource.Test(t, resource.TestCase{
@@ -211,9 +206,9 @@ func testAccAzureRMApiManagementApiOperation_basic(data acceptance.TestData) str
 
 resource "azurerm_api_management_api_operation" "test" {
   operation_id        = "acctest-operation"
-  api_name            = "${azurerm_api_management_api.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  api_name            = azurerm_api_management_api.test.name
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
   display_name        = "DELETE Resource"
   method              = "DELETE"
   url_template        = "/resource"
@@ -228,9 +223,9 @@ func testAccAzureRMApiManagementApiOperation_customMethod(data acceptance.TestDa
 
 resource "azurerm_api_management_api_operation" "test" {
   operation_id        = "acctest-operation"
-  api_name            = "${azurerm_api_management_api.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  api_name            = azurerm_api_management_api.test.name
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
   display_name        = "HAMMERTIME Resource"
   method              = "HAMMERTIME"
   url_template        = "/resource"
@@ -239,18 +234,18 @@ resource "azurerm_api_management_api_operation" "test" {
 }
 
 func testAccAzureRMApiManagementApiOperation_requiresImport(data acceptance.TestData) string {
-	template := testAccAzureRMApiManagementApiOperation_template(data)
+	template := testAccAzureRMApiManagementApiOperation_basic(data)
 	return fmt.Sprintf(`
 %s
 
 resource "azurerm_api_management_api_operation" "import" {
-  operation_id        = "${azurerm_api_management_api_operation.test.operation_id}"
-  api_name            = "${azurerm_api_management_api_operation.test.api_name}"
-  api_management_name = "${azurerm_api_management_api_operation.test.api_management_name}"
-  resource_group_name = "${azurerm_api_management_api_operation.test.resource_group_name}"
-  display_name        = "${azurerm_api_management_api_operation.test.display_name}"
-  method              = "${azurerm_api_management_api_operation.test.method}"
-  url_template        = "${azurerm_api_management_api_operation.test.url_template}"
+  operation_id        = azurerm_api_management_api_operation.test.operation_id
+  api_name            = azurerm_api_management_api_operation.test.api_name
+  api_management_name = azurerm_api_management_api_operation.test.api_management_name
+  resource_group_name = azurerm_api_management_api_operation.test.resource_group_name
+  display_name        = azurerm_api_management_api_operation.test.display_name
+  method              = azurerm_api_management_api_operation.test.method
+  url_template        = azurerm_api_management_api_operation.test.url_template
 }
 `, template)
 }
@@ -262,9 +257,9 @@ func testAccAzureRMApiManagementApiOperation_requestRepresentation(data acceptan
 
 resource "azurerm_api_management_api_operation" "test" {
   operation_id        = "acctest-operation"
-  api_name            = "${azurerm_api_management_api.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  api_name            = azurerm_api_management_api.test.name
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
   display_name        = "Acceptance Test Operation"
   method              = "DELETE"
   url_template        = "/user1"
@@ -289,9 +284,9 @@ func testAccAzureRMApiManagementApiOperation_requestRepresentationUpdated(data a
 
 resource "azurerm_api_management_api_operation" "test" {
   operation_id        = "acctest-operation"
-  api_name            = "${azurerm_api_management_api.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  api_name            = azurerm_api_management_api.test.name
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
   display_name        = "Acceptance Test Operation"
   method              = "DELETE"
   url_template        = "/user1"
@@ -316,9 +311,9 @@ func testAccAzureRMApiManagementApiOperation_headers(data acceptance.TestData) s
 
 resource "azurerm_api_management_api_operation" "test" {
   operation_id        = "acctest-operation"
-  api_name            = "${azurerm_api_management_api.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  api_name            = azurerm_api_management_api.test.name
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
   display_name        = "Acceptance Test Operation"
   method              = "DELETE"
   url_template        = "/user1"
@@ -362,6 +357,7 @@ resource "azurerm_api_management_api_operation" "test" {
   </user> 
 </response>
 SAMPLE
+
     }
   }
 }
@@ -375,9 +371,9 @@ func testAccAzureRMApiManagementApiOperation_representation(data acceptance.Test
 
 resource "azurerm_api_management_api_operation" "test" {
   operation_id        = "acctest-operation"
-  api_name            = "${azurerm_api_management_api.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  api_name            = azurerm_api_management_api.test.name
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
   display_name        = "Acceptance Test Operation"
   method              = "DELETE"
   url_template        = "/user1"
@@ -409,6 +405,7 @@ resource "azurerm_api_management_api_operation" "test" {
   </user> 
 </response>
 SAMPLE
+
     }
   }
 }
@@ -422,9 +419,9 @@ func testAccAzureRMApiManagementApiOperation_representationUpdated(data acceptan
 
 resource "azurerm_api_management_api_operation" "test" {
   operation_id        = "acctest-operation"
-  api_name            = "${azurerm_api_management_api.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  api_name            = azurerm_api_management_api.test.name
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
   display_name        = "Acceptance Test Operation"
   method              = "DELETE"
   url_template        = "/user1"
@@ -456,6 +453,7 @@ resource "azurerm_api_management_api_operation" "test" {
   </user> 
 </response>
 SAMPLE
+
     }
 
     representation {
@@ -477,6 +475,7 @@ SAMPLE
   }
 }
 SAMPLE
+
     }
   }
 }
@@ -485,6 +484,10 @@ SAMPLE
 
 func testAccAzureRMApiManagementApiOperation_template(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -492,21 +495,17 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_api_management" "test" {
   name                = "acctestAM-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   publisher_name      = "pub1"
   publisher_email     = "pub1@email.com"
-
-  sku {
-    name     = "Developer"
-    capacity = 1
-  }
+  sku_name            = "Developer_1"
 }
 
 resource "azurerm_api_management_api" "test" {
   name                = "acctestapi-%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  api_management_name = "${azurerm_api_management.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  api_management_name = azurerm_api_management.test.name
   display_name        = "Butter Parser"
   path                = "butter-parser"
   protocols           = ["https", "http"]

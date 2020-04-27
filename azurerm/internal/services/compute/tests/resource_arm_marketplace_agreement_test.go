@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -56,11 +55,6 @@ func testAccAzureRMMarketplaceAgreement_basic(t *testing.T) {
 }
 
 func testAccAzureRMMarketplaceAgreement_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_marketplace_agreement", "test")
 
 	resource.Test(t, resource.TestCase{
@@ -183,13 +177,17 @@ func testCheckAzureRMMarketplaceAgreementDestroy(s *terraform.State) error {
 }
 
 func testAccAzureRMMarketplaceAgreement_basicConfig() string {
-	return fmt.Sprintf(`
+	return `
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_marketplace_agreement" "test" {
   publisher = "barracudanetworks"
   offer     = "waf"
   plan      = "hourly"
 }
-`)
+`
 }
 
 func testAccAzureRMMarketplaceAgreement_requiresImportConfig() string {

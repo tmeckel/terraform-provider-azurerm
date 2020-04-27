@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -32,10 +31,6 @@ func TestAccAzureRMApiManagementOpenIDConnectProvider_basic(t *testing.T) {
 }
 
 func TestAccAzureRMApiManagementOpenIDConnectProvider_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_api_management_openid_connect_provider", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -136,8 +131,8 @@ func testAccAzureRMApiManagementOpenIDConnectProvider_basic(data acceptance.Test
 
 resource "azurerm_api_management_openid_connect_provider" "test" {
   name                = "acctest-%d"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
   client_id           = "00001111-2222-3333-%d"
   client_secret       = "%d-cwdavsxbacsaxZX-%d"
   display_name        = "Initial Name"
@@ -152,13 +147,13 @@ func testAccAzureRMApiManagementOpenIDConnectProvider_requiresImport(data accept
 %s
 
 resource "azurerm_api_management_openid_connect_provider" "import" {
-  name                = "${azurerm_api_management_openid_connect_provider.test.name}"
-  api_management_name = "${azurerm_api_management_openid_connect_provider.test.api_management_name}"
-  resource_group_name = "${azurerm_api_management_openid_connect_provider.test.resource_group_name}"
-  client_id           = "${azurerm_api_management_openid_connect_provider.test.client_id}"
-  client_secret       = "${azurerm_api_management_openid_connect_provider.test.client_secret}"
-  display_name        = "${azurerm_api_management_openid_connect_provider.test.display_name}"
-  metadata_endpoint   = "${azurerm_api_management_openid_connect_provider.test.metadata_endpoint}"
+  name                = azurerm_api_management_openid_connect_provider.test.name
+  api_management_name = azurerm_api_management_openid_connect_provider.test.api_management_name
+  resource_group_name = azurerm_api_management_openid_connect_provider.test.resource_group_name
+  client_id           = azurerm_api_management_openid_connect_provider.test.client_id
+  client_secret       = azurerm_api_management_openid_connect_provider.test.client_secret
+  display_name        = azurerm_api_management_openid_connect_provider.test.display_name
+  metadata_endpoint   = azurerm_api_management_openid_connect_provider.test.metadata_endpoint
 }
 `, template)
 }
@@ -170,8 +165,8 @@ func testAccAzureRMApiManagementOpenIDConnectProvider_complete(data acceptance.T
 
 resource "azurerm_api_management_openid_connect_provider" "test" {
   name                = "acctest-%d"
-  api_management_name = "${azurerm_api_management.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  api_management_name = azurerm_api_management.test.name
+  resource_group_name = azurerm_resource_group.test.name
   client_id           = "00001111-3333-2222-%d"
   client_secret       = "%d-423egvwdcsjx-%d"
   display_name        = "Updated Name"
@@ -183,6 +178,10 @@ resource "azurerm_api_management_openid_connect_provider" "test" {
 
 func testAccAzureRMApiManagementOpenIDConnectProvider_template(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -190,15 +189,11 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_api_management" "test" {
   name                = "acctestAM-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   publisher_name      = "pub1"
   publisher_email     = "pub1@email.com"
-
-  sku {
-    name     = "Developer"
-    capacity = 1
-  }
+  sku_name            = "Developer_1"
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
 }

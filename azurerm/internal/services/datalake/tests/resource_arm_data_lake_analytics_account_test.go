@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 )
 
 func TestAccAzureRMDataLakeAnalyticsAccount_basic(t *testing.T) {
@@ -34,11 +33,6 @@ func TestAccAzureRMDataLakeAnalyticsAccount_basic(t *testing.T) {
 }
 
 func TestAccAzureRMDataLakeAnalyticsAccount_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_data_lake_analytics_account", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -168,10 +162,10 @@ func testAccAzureRMDataLakeAnalyticsAccount_basic(data acceptance.TestData) stri
 
 resource "azurerm_data_lake_analytics_account" "test" {
   name                = "acctest%s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 
-  default_store_account_name = "${azurerm_data_lake_store.test.name}"
+  default_store_account_name = azurerm_data_lake_store.test.name
 }
 `, template, strconv.Itoa(data.RandomInteger)[2:17])
 }
@@ -182,10 +176,10 @@ func testAccAzureRMDataLakeAnalyticsAccount_requiresImport(data acceptance.TestD
 %s
 
 resource "azurerm_data_lake_analytics_account" "import" {
-  name                       = "${azurerm_data_lake_analytics_account.test.name}"
-  resource_group_name        = "${azurerm_data_lake_analytics_account.test.resource_group_name}"
-  location                   = "${azurerm_data_lake_analytics_account.test.location}"
-  default_store_account_name = "${azurerm_data_lake_analytics_account.test.default_store_account_name}"
+  name                       = azurerm_data_lake_analytics_account.test.name
+  resource_group_name        = azurerm_data_lake_analytics_account.test.resource_group_name
+  location                   = azurerm_data_lake_analytics_account.test.location
+  default_store_account_name = azurerm_data_lake_analytics_account.test.default_store_account_name
 }
 `, template)
 }
@@ -197,12 +191,12 @@ func testAccAzureRMDataLakeAnalyticsAccount_tier(data acceptance.TestData) strin
 
 resource "azurerm_data_lake_analytics_account" "test" {
   name                = "acctest%s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 
   tier = "Commitment_100AUHours"
 
-  default_store_account_name = "${azurerm_data_lake_store.test.name}"
+  default_store_account_name = azurerm_data_lake_store.test.name
 }
 `, template, strconv.Itoa(data.RandomInteger)[2:17])
 }
@@ -214,10 +208,10 @@ func testAccAzureRMDataLakeAnalyticsAccount_withTags(data acceptance.TestData) s
 
 resource "azurerm_data_lake_analytics_account" "test" {
   name                = "acctest%s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 
-  default_store_account_name = "${azurerm_data_lake_store.test.name}"
+  default_store_account_name = azurerm_data_lake_store.test.name
 
   tags = {
     environment = "Production"
@@ -234,10 +228,10 @@ func testAccAzureRMDataLakeAnalyticsAccount_withTagsUpdate(data acceptance.TestD
 
 resource "azurerm_data_lake_analytics_account" "test" {
   name                = "acctest%s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 
-  default_store_account_name = "${azurerm_data_lake_store.test.name}"
+  default_store_account_name = azurerm_data_lake_store.test.name
 
   tags = {
     environment = "staging"

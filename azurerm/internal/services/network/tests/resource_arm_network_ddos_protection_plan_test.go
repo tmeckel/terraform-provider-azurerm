@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -24,12 +23,6 @@ func TestAccAzureRMNetworkDDoSProtectionPlan(t *testing.T) {
 		},
 		"datasource": {
 			"basic": testAccAzureRMNetworkDDoSProtectionPlanDataSource_basic,
-		},
-		"deprecated": {
-			"basic":          testAccAzureRMDDoSProtectionPlan_basic,
-			"requiresImport": testAccAzureRMDDoSProtectionPlan_requiresImport,
-			"withTags":       testAccAzureRMDDoSProtectionPlan_withTags,
-			"disappears":     testAccAzureRMDDoSProtectionPlan_disappears,
 		},
 	}
 
@@ -65,11 +58,6 @@ func testAccAzureRMNetworkDDoSProtectionPlan_basic(t *testing.T) {
 }
 
 func testAccAzureRMNetworkDDoSProtectionPlan_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_network_ddos_protection_plan", "test")
 
 	resource.Test(t, resource.TestCase{
@@ -230,6 +218,10 @@ func testCheckAzureRMNetworkDDoSProtectionPlanDestroy(s *terraform.State) error 
 
 func testAccAzureRMNetworkDDoSProtectionPlan_basicConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -237,8 +229,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_network_ddos_protection_plan" "test" {
   name                = "acctestddospplan-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
 }
@@ -249,15 +241,19 @@ func testAccAzureRMNetworkDDoSProtectionPlan_requiresImportConfig(data acceptanc
 %s
 
 resource "azurerm_network_ddos_protection_plan" "import" {
-  name                = "${azurerm_network_ddos_protection_plan.test.name}"
-  location            = "${azurerm_network_ddos_protection_plan.test.location}"
-  resource_group_name = "${azurerm_network_ddos_protection_plan.test.resource_group_name}"
+  name                = azurerm_network_ddos_protection_plan.test.name
+  location            = azurerm_network_ddos_protection_plan.test.location
+  resource_group_name = azurerm_network_ddos_protection_plan.test.resource_group_name
 }
 `, basicConfig)
 }
 
 func testAccAzureRMNetworkDDoSProtectionPlan_withTagsConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -265,8 +261,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_network_ddos_protection_plan" "test" {
   name                = "acctestddospplan-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   tags = {
     environment = "Production"
@@ -278,6 +274,10 @@ resource "azurerm_network_ddos_protection_plan" "test" {
 
 func testAccAzureRMNetworkDDoSProtectionPlan_withUpdatedTagsConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -285,8 +285,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_network_ddos_protection_plan" "test" {
   name                = "acctestddospplan-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 
   tags = {
     environment = "Staging"

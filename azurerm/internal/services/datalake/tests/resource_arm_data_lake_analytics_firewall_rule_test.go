@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 )
 
 func TestAccAzureRMDataLakeAnalyticsFirewallRule_basic(t *testing.T) {
@@ -38,11 +37,6 @@ func TestAccAzureRMDataLakeAnalyticsFirewallRule_basic(t *testing.T) {
 }
 
 func TestAccAzureRMDataLakeAnalyticsFirewallRule_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_data_lake_analytics_firewall_rule", "test")
 	startIP := "1.1.1.1"
 	endIP := "2.2.2.2"
@@ -179,6 +173,10 @@ func testCheckAzureRMDataLakeAnalyticsFirewallRuleDestroy(s *terraform.State) er
 
 func testAccAzureRMDataLakeAnalyticsFirewallRule_basic(data acceptance.TestData, startIP, endIP string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%[1]d"
   location = "%[2]s"
@@ -186,22 +184,22 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_data_lake_store" "test" {
   name                = "acctest%[3]s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 }
 
 resource "azurerm_data_lake_analytics_account" "test" {
   name                = "acctest%[3]s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 
-  default_store_account_name = "${azurerm_data_lake_store.test.name}"
+  default_store_account_name = azurerm_data_lake_store.test.name
 }
 
 resource "azurerm_data_lake_analytics_firewall_rule" "test" {
   name                = "acctest%[3]s"
-  account_name        = "${azurerm_data_lake_analytics_account.test.name}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  account_name        = azurerm_data_lake_analytics_account.test.name
+  resource_group_name = azurerm_resource_group.test.name
   start_ip_address    = "%[4]s"
   end_ip_address      = "%[5]s"
 }
@@ -214,11 +212,11 @@ func testAccAzureRMDataLakeAnalyticsFirewallRule_requiresImport(data acceptance.
 %s
 
 resource "azurerm_data_lake_analytics_firewall_rule" "import" {
-  name                = "${azurerm_data_lake_analytics_firewall_rule.test.name}"
-  account_name        = "${azurerm_data_lake_analytics_firewall_rule.test.account_name}"
-  resource_group_name = "${azurerm_data_lake_analytics_firewall_rule.test.resource_group_name}"
-  start_ip_address    = "${azurerm_data_lake_analytics_firewall_rule.test.start_ip_address}"
-  end_ip_address      = "${azurerm_data_lake_analytics_firewall_rule.test.end_ip_address}"
+  name                = azurerm_data_lake_analytics_firewall_rule.test.name
+  account_name        = azurerm_data_lake_analytics_firewall_rule.test.account_name
+  resource_group_name = azurerm_data_lake_analytics_firewall_rule.test.resource_group_name
+  start_ip_address    = azurerm_data_lake_analytics_firewall_rule.test.start_ip_address
+  end_ip_address      = azurerm_data_lake_analytics_firewall_rule.test.end_ip_address
 }
 `, template)
 }

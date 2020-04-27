@@ -31,6 +31,8 @@ output "sql_server_id" {
 
 ## Attributes Reference
 
+* `id` - The id of the SQL Server resource.
+
 * `location` - The location of the Resource Group in which the SQL Server exists.
 
 * `fqdn` - The fully qualified domain name of the SQL Server.
@@ -53,9 +55,7 @@ An `identity` block exports the following:
 
 * `type` - The identity type of the SQL Server.
 
-### Timeouts
-
-~> **Note:** Custom Timeouts are available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+## Timeouts
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 

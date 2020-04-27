@@ -7,35 +7,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
+	azValidate "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
-
-type VirtualMachineScaleSetResourceID struct {
-	ResourceGroup string
-	Name          string
-}
-
-func ParseVirtualMachineScaleSetID(input string) (*VirtualMachineScaleSetResourceID, error) {
-	id, err := azure.ParseAzureResourceID(input)
-	if err != nil {
-		return nil, fmt.Errorf("[ERROR] Unable to parse Virtual Machine Scale Set ID %q: %+v", input, err)
-	}
-
-	vmScaleSet := VirtualMachineScaleSetResourceID{
-		ResourceGroup: id.ResourceGroup,
-	}
-
-	if vmScaleSet.Name, err = id.PopSegment("virtualMachineScaleSets"); err != nil {
-		return nil, err
-	}
-
-	if err := id.ValidateNoEmptySegments(input); err != nil {
-		return nil, err
-	}
-
-	return &vmScaleSet, nil
-}
 
 func VirtualMachineScaleSetAdditionalCapabilitiesSchema() *schema.Schema {
 	return &schema.Schema{
@@ -762,7 +737,7 @@ func VirtualMachineScaleSetDataDiskSchema() *schema.Schema {
 					// presumably this'll take effect once key rotation is supported a few months post-GA?
 					// however for now let's make this ForceNew since it can't be (successfully) updated
 					ForceNew:     true,
-					ValidateFunc: azure.ValidateResourceID,
+					ValidateFunc: validate.DiskEncryptionSetID,
 				},
 
 				"disk_size_gb": {
@@ -930,7 +905,7 @@ func VirtualMachineScaleSetOSDiskSchema() *schema.Schema {
 					// presumably this'll take effect once key rotation is supported a few months post-GA?
 					// however for now let's make this ForceNew since it can't be (successfully) updated
 					ForceNew:     true,
-					ValidateFunc: azure.ValidateResourceID,
+					ValidateFunc: validate.DiskEncryptionSetID,
 				},
 
 				"disk_size_gb": {
@@ -1136,7 +1111,7 @@ func VirtualMachineScaleSetRollingUpgradePolicySchema() *schema.Schema {
 					Type:         schema.TypeString,
 					Required:     true,
 					ForceNew:     true,
-					ValidateFunc: validate.ISO8601Duration,
+					ValidateFunc: azValidate.ISO8601Duration,
 				},
 			},
 		},
@@ -1189,6 +1164,127 @@ func FlattenVirtualMachineScaleSetRollingUpgradePolicy(input *compute.RollingUpg
 			"max_unhealthy_instance_percent":          maxUnhealthyInstancePercent,
 			"max_unhealthy_upgraded_instance_percent": maxUnhealthyUpgradedInstancePercent,
 			"pause_time_between_batches":              pauseTimeBetweenBatches,
+		},
+	}
+}
+
+func VirtualMachineScaleSetTerminateNotificationSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		Computed: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"enabled": {
+					Type:     schema.TypeBool,
+					Required: true,
+				},
+				"timeout": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					ValidateFunc: azValidate.ISO8601Duration,
+					Default:      "PT5M",
+				},
+			},
+		},
+	}
+}
+
+func ExpandVirtualMachineScaleSetScheduledEventsProfile(input []interface{}) *compute.ScheduledEventsProfile {
+	if len(input) == 0 {
+		return nil
+	}
+
+	raw := input[0].(map[string]interface{})
+	enabled := raw["enabled"].(bool)
+	timeout := raw["timeout"].(string)
+
+	return &compute.ScheduledEventsProfile{
+		TerminateNotificationProfile: &compute.TerminateNotificationProfile{
+			Enable:           &enabled,
+			NotBeforeTimeout: &timeout,
+		},
+	}
+}
+
+func FlattenVirtualMachineScaleSetScheduledEventsProfile(input *compute.ScheduledEventsProfile) []interface{} {
+	// if enabled is set to false, there will be no ScheduledEventsProfile in response, to avoid plan non empty when
+	// a user explicitly set enabled to false, we need to assign a default block to this field
+
+	enabled := false
+	if input != nil && input.TerminateNotificationProfile != nil && input.TerminateNotificationProfile.Enable != nil {
+		enabled = *input.TerminateNotificationProfile.Enable
+	}
+
+	timeout := "PT5M"
+	if input != nil && input.TerminateNotificationProfile != nil && input.TerminateNotificationProfile.NotBeforeTimeout != nil {
+		timeout = *input.TerminateNotificationProfile.NotBeforeTimeout
+	}
+
+	return []interface{}{
+		map[string]interface{}{
+			"enabled": enabled,
+			"timeout": timeout,
+		},
+	}
+}
+
+func VirtualMachineScaleSetAutomaticRepairsPolicySchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		Computed: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"enabled": {
+					Type:     schema.TypeBool,
+					Required: true,
+				},
+				"grace_period": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Default:  "PT30M",
+					// this field actually has a range from 30m to 90m, is there a function that can do this validation?
+					ValidateFunc: azValidate.ISO8601Duration,
+				},
+			},
+		},
+	}
+}
+
+func ExpandVirtualMachineScaleSetAutomaticRepairsPolicy(input []interface{}) *compute.AutomaticRepairsPolicy {
+	if len(input) == 0 {
+		return nil
+	}
+
+	raw := input[0].(map[string]interface{})
+
+	return &compute.AutomaticRepairsPolicy{
+		Enabled:     utils.Bool(raw["enabled"].(bool)),
+		GracePeriod: utils.String(raw["grace_period"].(string)),
+	}
+}
+
+func FlattenVirtualMachineScaleSetAutomaticRepairsPolicy(input *compute.AutomaticRepairsPolicy) []interface{} {
+	// if enabled is set to false, there will be no AutomaticRepairsPolicy in response, to avoid plan non empty when
+	// a user explicitly set enabled to false, we need to assign a default block to this field
+
+	enabled := false
+	if input != nil && input.Enabled != nil {
+		enabled = *input.Enabled
+	}
+
+	gracePeriod := "PT30M"
+	if input != nil && input.GracePeriod != nil {
+		gracePeriod = *input.GracePeriod
+	}
+
+	return []interface{}{
+		map[string]interface{}{
+			"enabled":      enabled,
+			"grace_period": gracePeriod,
 		},
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -22,6 +21,7 @@ func TestAccAzureRMExpressRouteCircuit(t *testing.T) {
 			"metered":                      testAccAzureRMExpressRouteCircuit_basicMetered,
 			"unlimited":                    testAccAzureRMExpressRouteCircuit_basicUnlimited,
 			"update":                       testAccAzureRMExpressRouteCircuit_update,
+			"updateTags":                   testAccAzureRMExpressRouteCircuit_updateTags,
 			"tierUpdate":                   testAccAzureRMExpressRouteCircuit_tierUpdate,
 			"premiumMetered":               testAccAzureRMExpressRouteCircuit_premiumMetered,
 			"premiumUnlimited":             testAccAzureRMExpressRouteCircuit_premiumUnlimited,
@@ -35,7 +35,8 @@ func TestAccAzureRMExpressRouteCircuit(t *testing.T) {
 			"requiresImport":                testAccAzureRMExpressRouteCircuitPeering_requiresImport,
 		},
 		"MicrosoftPeering": {
-			"microsoftPeering": testAccAzureRMExpressRouteCircuitPeering_microsoftPeering,
+			"microsoftPeering":                testAccAzureRMExpressRouteCircuitPeering_microsoftPeering,
+			"microsoftPeeringCustomerRouting": testAccAzureRMExpressRouteCircuitPeering_microsoftPeeringCustomerRouting,
 		},
 		"authorization": {
 			"basic":          testAccAzureRMExpressRouteCircuitAuthorization_basic,
@@ -78,11 +79,6 @@ func testAccAzureRMExpressRouteCircuit_basicMetered(t *testing.T) {
 }
 
 func testAccAzureRMExpressRouteCircuit_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_express_route_circuit", "test")
 	var erc network.ExpressRouteCircuit
 
@@ -146,6 +142,33 @@ func testAccAzureRMExpressRouteCircuit_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testCheckAzureRMExpressRouteCircuitExists(data.ResourceName, &erc),
 					resource.TestCheckResourceAttr(data.ResourceName, "sku.0.family", "UnlimitedData"),
+				),
+			},
+		},
+	})
+}
+
+func testAccAzureRMExpressRouteCircuit_updateTags(t *testing.T) {
+	data := acceptance.BuildTestData(t, "azurerm_express_route_circuit", "test")
+	var erc network.ExpressRouteCircuit
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { acceptance.PreCheck(t) },
+		Providers:    acceptance.SupportedProviders,
+		CheckDestroy: testCheckAzureRMExpressRouteCircuitDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAzureRMExpressRouteCircuit_basicMeteredConfig(data),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckAzureRMExpressRouteCircuitExists(data.ResourceName, &erc),
+					resource.TestCheckResourceAttr(data.ResourceName, "tags.Environment", "production"),
+				),
+			},
+			{
+				Config: testAccAzureRMExpressRouteCircuit_basicMeteredConfigUpdatedTags(data),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckAzureRMExpressRouteCircuitExists(data.ResourceName, &erc),
+					resource.TestCheckResourceAttr(data.ResourceName, "tags.Environment", "test"),
 				),
 			},
 		},
@@ -309,6 +332,10 @@ func testCheckAzureRMExpressRouteCircuitDestroy(s *terraform.State) error {
 
 func testAccAzureRMExpressRouteCircuit_basicMeteredConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -316,8 +343,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_express_route_circuit" "test" {
   name                  = "acctest-erc-%d"
-  location              = "${azurerm_resource_group.test.location}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  location              = azurerm_resource_group.test.location
+  resource_group_name   = azurerm_resource_group.test.name
   service_provider_name = "Equinix"
   peering_location      = "Silicon Valley"
   bandwidth_in_mbps     = 50
@@ -337,15 +364,50 @@ resource "azurerm_express_route_circuit" "test" {
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
 }
 
+func testAccAzureRMExpressRouteCircuit_basicMeteredConfigUpdatedTags(data acceptance.TestData) string {
+	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_resource_group" "test" {
+  name     = "acctestRG-%d"
+  location = "%s"
+}
+
+resource "azurerm_express_route_circuit" "test" {
+  name                  = "acctest-erc-%d"
+  location              = azurerm_resource_group.test.location
+  resource_group_name   = azurerm_resource_group.test.name
+  service_provider_name = "Equinix"
+  peering_location      = "Silicon Valley"
+  bandwidth_in_mbps     = 50
+
+  sku {
+    tier   = "Standard"
+    family = "MeteredData"
+  }
+
+  allow_classic_operations = false
+
+  tags = {
+    Environment = "test"
+    Purpose     = "UpdatedAcceptanceTests"
+    Caller      = "Additional Value"
+  }
+}
+`, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
+}
+
 func testAccAzureRMExpressRouteCircuit_requiresImportConfig(data acceptance.TestData) string {
 	template := testAccAzureRMExpressRouteCircuit_basicMeteredConfig(data)
 	return fmt.Sprintf(`
 %s
 
 resource "azurerm_express_route_circuit" "import" {
-  name                  = "${azurerm_express_route_circuit.test.name}"
-  location              = "${azurerm_express_route_circuit.test.location}"
-  resource_group_name   = "${azurerm_express_route_circuit.test.resource_group_name}"
+  name                  = azurerm_express_route_circuit.test.name
+  location              = azurerm_express_route_circuit.test.location
+  resource_group_name   = azurerm_express_route_circuit.test.resource_group_name
   service_provider_name = "Equinix"
   peering_location      = "Silicon Valley"
   bandwidth_in_mbps     = 50
@@ -367,6 +429,10 @@ resource "azurerm_express_route_circuit" "import" {
 
 func testAccAzureRMExpressRouteCircuit_basicUnlimitedConfig(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -374,8 +440,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_express_route_circuit" "test" {
   name                  = "acctest-erc-%d"
-  location              = "${azurerm_resource_group.test.location}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  location              = azurerm_resource_group.test.location
+  resource_group_name   = azurerm_resource_group.test.name
   service_provider_name = "Equinix"
   peering_location      = "Silicon Valley"
   bandwidth_in_mbps     = 50
@@ -397,6 +463,10 @@ resource "azurerm_express_route_circuit" "test" {
 
 func testAccAzureRMExpressRouteCircuit_sku(data acceptance.TestData, tier string, family string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -404,8 +474,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_express_route_circuit" "test" {
   name                  = "acctest-erc-%d"
-  location              = "${azurerm_resource_group.test.location}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  location              = azurerm_resource_group.test.location
+  resource_group_name   = azurerm_resource_group.test.name
   service_provider_name = "Equinix"
   peering_location      = "Silicon Valley"
   bandwidth_in_mbps     = 50
@@ -427,6 +497,10 @@ resource "azurerm_express_route_circuit" "test" {
 
 func testAccAzureRMExpressRouteCircuit_allowClassicOperations(data acceptance.TestData, allowClassicOperations string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -434,8 +508,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_express_route_circuit" "test" {
   name                  = "acctest-erc-%d"
-  location              = "${azurerm_resource_group.test.location}"
-  resource_group_name   = "${azurerm_resource_group.test.name}"
+  location              = azurerm_resource_group.test.location
+  resource_group_name   = azurerm_resource_group.test.name
   service_provider_name = "Equinix"
   peering_location      = "Silicon Valley"
   bandwidth_in_mbps     = 50

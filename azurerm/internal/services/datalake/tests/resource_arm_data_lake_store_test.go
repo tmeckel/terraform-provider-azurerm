@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 )
 
 func TestAccAzureRMDataLakeStore_basic(t *testing.T) {
@@ -35,11 +34,6 @@ func TestAccAzureRMDataLakeStore_basic(t *testing.T) {
 	})
 }
 func TestAccAzureRMDataLakeStore_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_data_lake_store", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -232,6 +226,10 @@ func testCheckAzureRMDataLakeStoreDestroy(s *terraform.State) error {
 
 func testAccAzureRMDataLakeStore_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -239,8 +237,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_data_lake_store" "test" {
   name                = "acctest%s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 }
 `, data.RandomInteger, data.Locations.Primary, strconv.Itoa(data.RandomInteger)[2:17])
 }
@@ -251,15 +249,19 @@ func testAccAzureRMDataLakeStore_requiresImport(data acceptance.TestData) string
 %s
 
 resource "azurerm_data_lake_store" "import" {
-  name                = "${azurerm_data_lake_store.test.name}"
-  resource_group_name = "${azurerm_data_lake_store.test.resource_group_name}"
-  location            = "${azurerm_data_lake_store.test.location}"
+  name                = azurerm_data_lake_store.test.name
+  resource_group_name = azurerm_data_lake_store.test.resource_group_name
+  location            = azurerm_data_lake_store.test.location
 }
 `, template)
 }
 
 func testAccAzureRMDataLakeStore_tier(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -267,8 +269,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_data_lake_store" "test" {
   name                = "acctest%s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
   tier                = "Commitment_1TB"
 }
 `, data.RandomInteger, data.Locations.Primary, strconv.Itoa(data.RandomInteger)[2:17])
@@ -276,6 +278,10 @@ resource "azurerm_data_lake_store" "test" {
 
 func testAccAzureRMDataLakeStore_encryptionDisabled(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -283,8 +289,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_data_lake_store" "test" {
   name                = "acctest%s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
   encryption_state    = "Disabled"
 }
 `, data.RandomInteger, data.Locations.Primary, strconv.Itoa(data.RandomInteger)[2:17])
@@ -292,6 +298,10 @@ resource "azurerm_data_lake_store" "test" {
 
 func testAccAzureRMDataLakeStore_firewall(data acceptance.TestData, firewallState string, firewallAllowAzureIPs string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -299,8 +309,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_data_lake_store" "test" {
   name                     = "acctest%s"
-  resource_group_name      = "${azurerm_resource_group.test.name}"
-  location                 = "${azurerm_resource_group.test.location}"
+  resource_group_name      = azurerm_resource_group.test.name
+  location                 = azurerm_resource_group.test.location
   firewall_state           = "%s"
   firewall_allow_azure_ips = "%s"
 }
@@ -309,6 +319,10 @@ resource "azurerm_data_lake_store" "test" {
 
 func testAccAzureRMDataLakeStore_withTags(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -316,8 +330,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_data_lake_store" "test" {
   name                = "acctest%s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 
   tags = {
     environment = "Production"
@@ -329,6 +343,10 @@ resource "azurerm_data_lake_store" "test" {
 
 func testAccAzureRMDataLakeStore_withTagsUpdate(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -336,8 +354,8 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_data_lake_store" "test" {
   name                = "acctest%s"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 
   tags = {
     environment = "staging"

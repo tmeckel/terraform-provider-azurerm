@@ -93,6 +93,11 @@ func resourceArmVirtualNetwork() *schema.Resource {
 				},
 			},
 
+			"guid": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"subnet": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -178,7 +183,7 @@ func resourceArmVirtualNetworkCreateUpdate(d *schema.ResourceData, meta interfac
 
 			networkSecurityGroupName := parsedNsgID.Path["networkSecurityGroups"]
 
-			if !SliceContainsValue(networkSecurityGroupNames, networkSecurityGroupName) {
+			if !azure.SliceContainsValue(networkSecurityGroupNames, networkSecurityGroupName) {
 				networkSecurityGroupNames = append(networkSecurityGroupNames, networkSecurityGroupName)
 			}
 		}
@@ -232,11 +237,14 @@ func resourceArmVirtualNetworkRead(d *schema.ResourceData, meta interface{}) err
 
 	d.Set("name", resp.Name)
 	d.Set("resource_group_name", resGroup)
+
 	if location := resp.Location; location != nil {
 		d.Set("location", azure.NormalizeLocation(*location))
 	}
 
 	if props := resp.VirtualNetworkPropertiesFormat; props != nil {
+		d.Set("guid", props.ResourceGUID)
+
 		if space := props.AddressSpace; space != nil {
 			d.Set("address_space", utils.FlattenStringSlice(space.AddressPrefixes))
 		}
@@ -297,7 +305,7 @@ func expandVirtualNetworkProperties(ctx context.Context, d *schema.ResourceData,
 
 			name := subnet["name"].(string)
 			log.Printf("[INFO] setting subnets inside vNet, processing %q", name)
-			//since subnets can also be created outside of vNet definition (as root objects)
+			// since subnets can also be created outside of vNet definition (as root objects)
 			// do a GET on subnet properties from the server before setting them
 			resGroup := d.Get("resource_group_name").(string)
 			vnetName := d.Get("name").(string)
@@ -310,7 +318,7 @@ func expandVirtualNetworkProperties(ctx context.Context, d *schema.ResourceData,
 			prefix := subnet["address_prefix"].(string)
 			secGroup := subnet["security_group"].(string)
 
-			//set the props from config and leave the rest intact
+			// set the props from config and leave the rest intact
 			subnetObj.Name = &name
 			if subnetObj.SubnetPropertiesFormat == nil {
 				subnetObj.SubnetPropertiesFormat = &network.SubnetPropertiesFormat{}
@@ -452,7 +460,7 @@ func getExistingSubnet(ctx context.Context, resGroup string, vnetName string, su
 		if resp.StatusCode == http.StatusNotFound {
 			return &network.Subnet{}, nil
 		}
-		//raise an error if there was an issue other than 404 in getting subnet properties
+		// raise an error if there was an issue other than 404 in getting subnet properties
 		return nil, err
 	}
 
@@ -480,7 +488,7 @@ func expandAzureRmVirtualNetworkVirtualNetworkSecurityGroupNames(d *schema.Resou
 
 				networkSecurityGroupName := parsedNsgID.Path["networkSecurityGroups"]
 
-				if !SliceContainsValue(nsgNames, networkSecurityGroupName) {
+				if !azure.SliceContainsValue(nsgNames, networkSecurityGroupName) {
 					nsgNames = append(nsgNames, networkSecurityGroupName)
 				}
 			}

@@ -11,7 +11,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -56,11 +55,6 @@ func TestAccAzureRMIotHubSharedAccessPolicy_writeWithoutRead(t *testing.T) {
 }
 
 func TestAccAzureRMIotHubSharedAccessPolicy_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_iothub_shared_access_policy", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -84,6 +78,10 @@ func TestAccAzureRMIotHubSharedAccessPolicy_requiresImport(t *testing.T) {
 
 func testAccAzureRMIotHubSharedAccessPolicy_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -91,12 +89,11 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_iothub" "test" {
   name                = "acctestIoTHub-%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 
   sku {
     name     = "B1"
-    tier     = "Basic"
     capacity = "1"
   }
 
@@ -106,8 +103,8 @@ resource "azurerm_iothub" "test" {
 }
 
 resource "azurerm_iothub_shared_access_policy" "test" {
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  iothub_name         = "${azurerm_iothub.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  iothub_name         = azurerm_iothub.test.name
   name                = "acctest"
 
   registry_read  = true
@@ -122,8 +119,8 @@ func testAccAzureRMIotHubSharedAccessPolicy_requiresImport(data acceptance.TestD
 %s
 
 resource "azurerm_iothub_shared_access_policy" "import" {
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  iothub_name         = "${azurerm_iothub.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  iothub_name         = azurerm_iothub.test.name
   name                = "acctest"
 
   registry_read  = true
@@ -134,6 +131,10 @@ resource "azurerm_iothub_shared_access_policy" "import" {
 
 func testAccAzureRMIotHubSharedAccessPolicy_writeWithoutRead(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -141,12 +142,11 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_iothub" "test" {
   name                = "acctestIoTHub-%d"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location            = "${azurerm_resource_group.test.location}"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
 
   sku {
     name     = "B1"
-    tier     = "Basic"
     capacity = "1"
   }
 
@@ -156,8 +156,8 @@ resource "azurerm_iothub" "test" {
 }
 
 resource "azurerm_iothub_shared_access_policy" "test" {
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  iothub_name         = "${azurerm_iothub.test.name}"
+  resource_group_name = azurerm_resource_group.test.name
+  iothub_name         = azurerm_iothub.test.name
   name                = "acctest"
 
   registry_write = true

@@ -24,18 +24,22 @@ data "azurerm_storage_container" "example" {
 The following arguments are supported:
 
 * `name` - The name of the Container.
-* `storage_account_name` - The name of the Storage Account where the Container was created.
+
+* `storage_account_name` - The name of the Storage Account where the Container exists.
 
 ## Attributes Reference
 
 * `container_access_type` - The Access Level configured for this Container.
+
 * `has_immutability_policy` - Is there an Immutability Policy configured on this Storage Container?
+
 * `has_legal_hold` - Is there a Legal Hold configured on this Storage Container?
+
 * `metadata`  - A mapping of MetaData for this Container.
 
-### Timeouts
+* `resource_manager_id` - The Resource Manager ID of this Storage Container.
 
-~> **Note:** Custom Timeouts are available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+## Timeouts
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 

@@ -25,6 +25,18 @@ resource "azurerm_sql_server" "example" {
   version                      = "12.0"
   administrator_login          = "4dm1n157r470r"
   administrator_login_password = "4-v3ry-53cr37-p455w0rd"
+
+  tags = {
+    environment = "production"
+  }
+}
+
+resource "azurerm_storage_account" "example" {
+  name                     = "examplesa"
+  resource_group_name      = azurerm_resource_group.example.name
+  location                 = azurerm_resource_group.example.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
 }
 
 resource "azurerm_sql_database" "example" {
@@ -32,6 +44,15 @@ resource "azurerm_sql_database" "example" {
   resource_group_name = azurerm_resource_group.example.name
   location            = "West US"
   server_name         = azurerm_sql_server.example.name
+
+  extended_auditing_policy {
+    storage_endpoint                        = azurerm_storage_account.example.primary_blob_endpoint
+    storage_account_access_key              = azurerm_storage_account.example.primary_access_key
+    storage_account_access_key_is_secondary = true
+    retention_in_days                       = 6
+  }
+
+
 
   tags = {
     environment = "production"
@@ -76,6 +97,10 @@ The following arguments are supported:
 
 * `read_scale` - (Optional) Read-only connections will be redirected to a high-available replica. Please see [Use read-only replicas to load-balance read-only query workloads](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-read-scale-out).
 
+* `zone_redundant` - (Optional) Whether or not this database is zone redundant, which means the replicas of this database will be spread across multiple availability zones.
+
+* `extended_auditing_policy` - (Optional) A `extended_auditing_policy` block as defined below.
+
 * `tags` - (Optional) A mapping of tags to assign to the resource.
 
 `import` supports the following:
@@ -101,6 +126,15 @@ The following arguments are supported:
 * `storage_endpoint` - (Optional) Specifies the blob storage endpoint (e.g. https://MyAccount.blob.core.windows.net). This blob storage will hold all Threat Detection audit logs. Required if `state` is `Enabled`.
 * `use_server_default` - (Optional) Should the default server policy be used? Defaults to `Disabled`.
 
+---
+
+A `extended_auditing_policy` block supports the following:
+
+* `storage_account_access_key` - (Required)  Specifies the access key to use for the auditing storage account.
+* `storage_endpoint` - (Required) Specifies the blob storage endpoint (e.g. https://MyAccount.blob.core.windows.net).
+* `storage_account_access_key_is_secondary` - (Optional) Specifies whether `storage_account_access_key` value is the storage's secondary key.
+* `retention_in_days` - (Optional) Specifies the number of days to retain logs for in the storage account.
+
 ## Attributes Reference
 
 The following attributes are exported:
@@ -109,9 +143,7 @@ The following attributes are exported:
 * `creation_date` - The creation date of the SQL Database.
 * `default_secondary_location` - The default secondary location of the SQL Database.
 
-### Timeouts
-
-~> **Note:** Custom Timeouts are available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+## Timeouts
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 

@@ -50,6 +50,8 @@ output "https_endpoint" {
 
 * `ssh_endpoint` - The SSH Endpoint for this HDInsight Cluster.
 
+* `min_tls_version` - The minimal supported tls version. 
+
 * `tags` - A map of tags assigned to the HDInsight Cluster.
 
 ---
@@ -62,9 +64,7 @@ A `gateway` block exports the following:
 
 * `password` - The password used for the Ambari Portal.
 
-### Timeouts
-
-~> **Note:** Custom Timeouts are available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+## Timeouts
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 

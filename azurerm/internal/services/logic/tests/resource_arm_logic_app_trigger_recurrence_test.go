@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 )
 
 func TestAccAzureRMLogicAppTriggerRecurrence_month(t *testing.T) {
@@ -31,11 +30,6 @@ func TestAccAzureRMLogicAppTriggerRecurrence_month(t *testing.T) {
 }
 
 func TestAccAzureRMLogicAppTriggerRecurrence_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
-
 	data := acceptance.BuildTestData(t, "azurerm_logic_app_trigger_recurrence", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -214,6 +208,10 @@ func TestAccAzureRMLogicAppTriggerRecurrence_startTime(t *testing.T) {
 
 func testAccAzureRMLogicAppTriggerRecurrence_basic(data acceptance.TestData, frequency string, interval int) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -221,13 +219,13 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_logic_app_workflow" "test" {
   name                = "acctestlaw-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 }
 
 resource "azurerm_logic_app_trigger_recurrence" "test" {
   name         = "frequency-trigger"
-  logic_app_id = "${azurerm_logic_app_workflow.test.id}"
+  logic_app_id = azurerm_logic_app_workflow.test.id
   frequency    = "%s"
   interval     = %d
 }
@@ -236,6 +234,10 @@ resource "azurerm_logic_app_trigger_recurrence" "test" {
 
 func testAccAzureRMLogicAppTriggerRecurrence_startTime(data acceptance.TestData, startTime string) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -243,13 +245,13 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_logic_app_workflow" "test" {
   name                = "acctestlaw-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
 }
 
 resource "azurerm_logic_app_trigger_recurrence" "test" {
   name         = "frequency-trigger"
-  logic_app_id = "${azurerm_logic_app_workflow.test.id}"
+  logic_app_id = azurerm_logic_app_workflow.test.id
   frequency    = "Month"
   interval     = 1
   start_time   = "%s"
@@ -263,10 +265,10 @@ func testAccAzureRMLogicAppTriggerRecurrence_requiresImport(data acceptance.Test
 %s
 
 resource "azurerm_logic_app_trigger_recurrence" "import" {
-  name         = "${azurerm_logic_app_trigger_recurrence.test.name}"
-  logic_app_id = "${azurerm_logic_app_trigger_recurrence.test.logic_app_id}"
-  frequency    = "${azurerm_logic_app_trigger_recurrence.test.frequency}"
-  interval     = "${azurerm_logic_app_trigger_recurrence.test.interval}"
+  name         = azurerm_logic_app_trigger_recurrence.test.name
+  logic_app_id = azurerm_logic_app_trigger_recurrence.test.logic_app_id
+  frequency    = azurerm_logic_app_trigger_recurrence.test.frequency
+  interval     = azurerm_logic_app_trigger_recurrence.test.interval
 }
 `, template)
 }

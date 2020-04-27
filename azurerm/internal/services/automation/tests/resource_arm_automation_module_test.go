@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -32,10 +31,6 @@ func TestAccAzureRMAutomationModule_basic(t *testing.T) {
 }
 
 func TestAccAzureRMAutomationModule_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_automation_module", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -141,6 +136,10 @@ func testCheckAzureRMAutomationModuleExists(resourceName string) resource.TestCh
 
 func testAccAzureRMAutomationModule_basic(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -148,18 +147,15 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_automation_account" "test" {
   name                = "acctest-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-
-  sku {
-    name = "Basic"
-  }
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  sku_name            = "Basic"
 }
 
 resource "azurerm_automation_module" "test" {
   name                    = "xActiveDirectory"
-  resource_group_name     = "${azurerm_resource_group.test.name}"
-  automation_account_name = "${azurerm_automation_account.test.name}"
+  resource_group_name     = azurerm_resource_group.test.name
+  automation_account_name = azurerm_automation_account.test.name
 
   module_link {
     uri = "https://devopsgallerystorage.blob.core.windows.net/packages/xactivedirectory.2.19.0.nupkg"
@@ -170,6 +166,10 @@ resource "azurerm_automation_module" "test" {
 
 func testAccAzureRMAutomationModule_multipleModules(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -177,18 +177,15 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_automation_account" "test" {
   name                = "acctest-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-
-  sku {
-    name = "Basic"
-  }
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  sku_name            = "Basic"
 }
 
 resource "azurerm_automation_module" "test" {
   name                    = "AzureRM.Profile"
-  resource_group_name     = "${azurerm_resource_group.test.name}"
-  automation_account_name = "${azurerm_automation_account.test.name}"
+  resource_group_name     = azurerm_resource_group.test.name
+  automation_account_name = azurerm_automation_account.test.name
 
   module_link {
     uri = "https://psg-prod-eastus.azureedge.net/packages/azurerm.profile.5.8.2.nupkg"
@@ -197,14 +194,14 @@ resource "azurerm_automation_module" "test" {
 
 resource "azurerm_automation_module" "second" {
   name                    = "AzureRM.OperationalInsights"
-  resource_group_name     = "${azurerm_resource_group.test.name}"
-  automation_account_name = "${azurerm_automation_account.test.name}"
+  resource_group_name     = azurerm_resource_group.test.name
+  automation_account_name = azurerm_automation_account.test.name
 
   module_link {
     uri = "https://psg-prod-eastus.azureedge.net/packages/azurerm.operationalinsights.5.0.6.nupkg"
   }
 
-  depends_on = ["azurerm_automation_module.test"]
+  depends_on = [azurerm_automation_module.test]
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
 }
@@ -215,9 +212,9 @@ func testAccAzureRMAutomationModule_requiresImport(data acceptance.TestData) str
 %s
 
 resource "azurerm_automation_module" "import" {
-  name                    = "${azurerm_automation_module.test.name}"
-  resource_group_name     = "${azurerm_automation_module.test.resource_group_name}"
-  automation_account_name = "${azurerm_automation_module.test.automation_account_name}"
+  name                    = azurerm_automation_module.test.name
+  resource_group_name     = azurerm_automation_module.test.resource_group_name
+  automation_account_name = azurerm_automation_module.test.automation_account_name
 
   module_link {
     uri = "https://devopsgallerystorage.blob.core.windows.net/packages/xactivedirectory.2.19.0.nupkg"

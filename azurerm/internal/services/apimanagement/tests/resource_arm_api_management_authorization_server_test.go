@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/acceptance"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -32,10 +31,6 @@ func TestAccAzureRMAPIManagementAuthorizationServer_basic(t *testing.T) {
 }
 
 func TestAccAzureRMAPIManagementAuthorizationServer_requiresImport(t *testing.T) {
-	if !features.ShouldResourcesBeImported() {
-		t.Skip("Skipping since resources aren't required to be imported")
-		return
-	}
 	data := acceptance.BuildTestData(t, "azurerm_api_management_authorization_server", "test")
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -68,7 +63,7 @@ func TestAccAzureRMAPIManagementAuthorizationServer_complete(t *testing.T) {
 					testCheckAzureRMAPIManagementAuthorizationServerExists(data.ResourceName),
 				),
 			},
-			data.ImportStep(),
+			data.ImportStep("client_secret"),
 		},
 	})
 }
@@ -132,8 +127,8 @@ func testAccAzureRMAPIManagementAuthorizationServer_basic(data acceptance.TestDa
 
 resource "azurerm_api_management_authorization_server" "test" {
   name                         = "acctestauthsrv-%d"
-  resource_group_name          = "${azurerm_resource_group.test.name}"
-  api_management_name          = "${azurerm_api_management.test.name}"
+  resource_group_name          = azurerm_resource_group.test.name
+  api_management_name          = azurerm_api_management.test.name
   display_name                 = "Test Group"
   authorization_endpoint       = "https://azacctest.hashicorptest.com/client/authorize"
   client_id                    = "42424242-4242-4242-4242-424242424242"
@@ -156,14 +151,14 @@ func testAccAzureRMAPIManagementAuthorizationServer_requiresImport(data acceptan
 %s
 
 resource "azurerm_api_management_authorization_server" "import" {
-  name                         = "${azurerm_api_management_authorization_server.test.name}"
-  resource_group_name          = "${azurerm_api_management_authorization_server.test.resource_group_name}"
-  api_management_name          = "${azurerm_api_management_authorization_server.test.api_management_name}"
-  display_name                 = "${azurerm_api_management_authorization_server.test.display_name}"
-  authorization_endpoint       = "${azurerm_api_management_authorization_server.test.authorization_endpoint}"
-  client_id                    = "${azurerm_api_management_authorization_server.test.client_id}"
-  client_registration_endpoint = "${azurerm_api_management_authorization_server.test.client_registration_endpoint}"
-  grant_types                  = "${azurerm_api_management_authorization_server.test.grant_types}"
+  name                         = azurerm_api_management_authorization_server.test.name
+  resource_group_name          = azurerm_api_management_authorization_server.test.resource_group_name
+  api_management_name          = azurerm_api_management_authorization_server.test.api_management_name
+  display_name                 = azurerm_api_management_authorization_server.test.display_name
+  authorization_endpoint       = azurerm_api_management_authorization_server.test.authorization_endpoint
+  client_id                    = azurerm_api_management_authorization_server.test.client_id
+  client_registration_endpoint = azurerm_api_management_authorization_server.test.client_registration_endpoint
+  grant_types                  = azurerm_api_management_authorization_server.test.grant_types
 
   authorization_methods = [
     "GET",
@@ -179,8 +174,8 @@ func testAccAzureRMAPIManagementAuthorizationServer_complete(data acceptance.Tes
 
 resource "azurerm_api_management_authorization_server" "test" {
   name                         = "acctestauthsrv-%d"
-  resource_group_name          = "${azurerm_resource_group.test.name}"
-  api_management_name          = "${azurerm_api_management.test.name}"
+  resource_group_name          = azurerm_resource_group.test.name
+  api_management_name          = azurerm_api_management.test.name
   display_name                 = "Test Group"
   authorization_endpoint       = "https://azacctest.hashicorptest.com/client/authorize"
   client_id                    = "42424242-4242-4242-4242-424242424242"
@@ -211,6 +206,10 @@ resource "azurerm_api_management_authorization_server" "test" {
 
 func testAccAzureRMAPIManagementAuthorizationServer_template(data acceptance.TestData) string {
 	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "acctestRG-%d"
   location = "%s"
@@ -218,15 +217,11 @@ resource "azurerm_resource_group" "test" {
 
 resource "azurerm_api_management" "test" {
   name                = "acctestAM-%d"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
   publisher_name      = "pub1"
   publisher_email     = "pub1@email.com"
-
-  sku {
-    name     = "Developer"
-    capacity = 1
-  }
+  sku_name            = "Developer_1"
 }
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger)
 }

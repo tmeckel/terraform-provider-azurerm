@@ -1,5 +1,5 @@
 ---
-subcategory: "Beta"
+subcategory: "Compute"
 layout: "azurerm"
 page_title: "Azure Resource Manager: azurerm_linux_virtual_machine_scale_set"
 description: |-
@@ -12,21 +12,21 @@ Manages a Linux Virtual Machine Scale Set.
 
 ## Disclaimers
 
-~> **Note** **This resource is in Beta** and as such the Schema can change in Minor versions of the Provider. You can find out [how to opt into the Beta in this guide](https://terraform.io/docs/providers/azurerm/guides/2.0-beta.html)
-
 ~> **Note**: All arguments including the administrator login and password will be stored in the raw state as plain-text. [Read more about sensitive data in state](/docs/state/sensitive-data.html).
 
 -> **Note** Terraform will automatically update & reimage the nodes in the Scale Set (if Required) during an Update - this behaviour can be configured [using the `features` setting within the Provider block](https://www.terraform.io/docs/providers/azurerm/index.html#features).
 
 ~> **Note:** This resource does not support Unmanaged Disks. If you need to use Unmanaged Disks you can continue to use [the `azurerm_virtual_machine_scale_set` resource](virtual_machine_scale_set.html) instead
 
-~> In this Beta release there's a known issue where the `health_probe_id` is not passed to the Azure API during an update for machines using an Automatic or Rolling Upgrade Policy.
-
 ## Example Usage
 
 This example provisions a basic Linux Virtual Machine Scale Set on an internal network. Additional examples of how to use the `azurerm_linux_virtual_machine_scale_set` resource can be found [in the ./examples/vm-scale-set/linux` directory within the Github Repository](https://github.com/terraform-providers/terraform-provider-azurerm/tree/master/examples/vm-scale-set/linux).
 
 ```hcl
+provider "azurerm" {
+  features {}
+}
+
 resource "azurerm_resource_group" "example" {
   name     = "example-resources"
   location = "West Europe"
@@ -122,6 +122,10 @@ The following arguments are supported:
 
 * `automatic_os_upgrade_policy` - (Optional) A `automatic_os_upgrade_policy` block as defined below. This is Required and can only be specified when `upgrade_mode` is set to `Automatic`.
 
+* `automatic_instance_repair` - (Optional) A `automatic_instance_repair` block as defined below. To enable the automatic instance repair, this Virtual Machine Scale Set must have a valid `health_probe_id` or an [Application Health Extension](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-health-extension).
+
+~> **NOTE:** For more information about Automatic Instance Repair, please refer to [this doc](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-automatic-instance-repairs).
+
 * `boot_diagnostics` - (Optional) A `boot_diagnostics` block as defined below.
 
 * `computer_name_prefix` - (Optional) The prefix which should be used for the name of the Virtual Machines in this Scale Set. If unspecified this defaults to the value for the `name` field.
@@ -164,6 +168,8 @@ The following arguments are supported:
 
 * `rolling_upgrade_policy` - (Optional) A `rolling_upgrade_policy` block as defined below. This is Required and can only be specified when `upgrade_mode` is set to `Automatic` or `Rolling`.
 
+* `scale_in_policy` - (Optional) The scale-in policy rule that decides which virtual machines are chosen for removal when a Virtual Machine Scale Set is scaled in. Possible values for the scale-in policy rules are `Default`, `NewestVM` and `OldestVM`, defaults to `Default`. For more information about scale in policy, please [refer to this doc](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-scale-in-policy).
+
 * `secret` - (Optional) One or more `secret` blocks as defined below.
 
 * `single_placement_group` - (Optional) Should this Virtual Machine Scale Set be limited to a Single Placement Group, which means the number of instances will be capped at 100 Virtual Machines. Defaults to `true`.
@@ -177,6 +183,8 @@ The following arguments are supported:
 -> **NOTE:** One of either `source_image_id` or `source_image_reference` must be set.
 
 * `tags` - (Optional) A mapping of tags which should be assigned to this Virtual Machine Scale Set.
+
+* `terminate_notification` - (Optional) A `terminate_notification` block as defined below.
 
 * `upgrade_mode` - (Optional) Specifies how Upgrades (e.g. changing the Image/SKU) should be performed to Virtual Machine Instances. Possible values are `Automatic`, `Manual` and `Rolling`. Defaults to `Manual`.
 
@@ -209,6 +217,14 @@ A `automatic_os_upgrade_policy` block supports the following:
 * `disable_automatic_rollback` - (Required) Should automatic rollbacks be disabled? Changing this forces a new resource to be created.
 
 * `enable_automatic_os_upgrade` - (Required) Should OS Upgrades automatically be applied to Scale Set instances in a rolling fashion when a newer version of the OS Image becomes available? Changing this forces a new resource to be created.
+
+---
+
+A `automatic_instance_repair` block supports the following:
+
+* `enabled` - (Required) Should the automatic instance repair be enabled on this Virtual Machine Scale Set?
+
+* `grace_period` - (Optional) Amount of time (in minutes, between 30 and 90, defaults to 30 minutes) for which automatic repairs will be delayed. The grace period starts right after the VM is found unhealthy. The time duration should be specified in ISO 8601 format.
 
 ---
 
@@ -382,6 +398,16 @@ A `secret` block supports the following:
 
 * `key_vault_id` - (Required) The ID of the Key Vault from which all Secrets should be sourced.
 
+---
+
+A `terminate_notification` block supports the following:
+
+* `enabled` - (Required) Should the terminate notification be enabled on this Virtual Machine Scale Set? Defaults to `false`.
+
+* `timeout` - (Optional) Length of time (in minutes, between 5 and 15) a notification to be sent to the VM on the instance metadata server till the VM gets deleted. The time duration should be specified in ISO 8601 format.
+
+~> For more information about the terminate notification, please [refer to this doc](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-terminate-notification).
+
 ## Attributes Reference
 
 In addition to all arguments above, the following attributes are exported:
@@ -398,9 +424,7 @@ An `identity` block exports the following:
 
 * `principal_id` - The ID of the System Managed Service Principal.
 
-### Timeouts
-
-~> **Note:** Custom Timeouts are available [as an opt-in Beta in version 1.43 of the Azure Provider](/docs/providers/azurerm/guides/2.0-beta.html) and will be enabled by default in version 2.0 of the Azure Provider.
+## Timeouts
 
 The `timeouts` block allows you to specify [timeouts](https://www.terraform.io/docs/configuration/resources.html#timeouts) for certain actions:
 
