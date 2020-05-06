@@ -1059,10 +1059,6 @@ func apiManagementResourceHostnameSchema(schemaName string) map[string]*schema.S
 			Type:         schema.TypeString,
 			Optional:     true,
 			ValidateFunc: azure.ValidateKeyVaultChildId,
-			ConflictsWith: []string{
-				fmt.Sprintf("hostname_configuration.0.%s.0.certificate", schemaName),
-				fmt.Sprintf("hostname_configuration.0.%s.0.certificate_password", schemaName),
-			},
 		},
 
 		"certificate": {
@@ -1070,9 +1066,6 @@ func apiManagementResourceHostnameSchema(schemaName string) map[string]*schema.S
 			Optional:     true,
 			Sensitive:    true,
 			ValidateFunc: validation.StringIsNotEmpty,
-			ConflictsWith: []string{
-				fmt.Sprintf("hostname_configuration.0.%s.0.key_vault_id", schemaName),
-			},
 		},
 
 		"certificate_password": {
@@ -1080,9 +1073,6 @@ func apiManagementResourceHostnameSchema(schemaName string) map[string]*schema.S
 			Optional:     true,
 			Sensitive:    true,
 			ValidateFunc: validation.StringIsNotEmpty,
-			ConflictsWith: []string{
-				fmt.Sprintf("hostname_configuration.0.%s.0.key_vault_id", schemaName),
-			},
 		},
 
 		"negotiate_client_certificate": {
