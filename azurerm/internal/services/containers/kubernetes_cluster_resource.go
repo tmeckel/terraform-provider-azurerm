@@ -688,6 +688,7 @@ func resourceArmKubernetesClusterUpdate(d *schema.ResourceData, meta interface{}
 		return err
 	}
 
+	// lintignore:SA1019 - necessary due to partial updates
 	d.Partial(true)
 
 	// we need to conditionally update the cluster
@@ -904,6 +905,7 @@ func resourceArmKubernetesClusterUpdate(d *schema.ResourceData, meta interface{}
 		log.Printf("[DEBUG] Upgraded the version of Kubernetes to %q..", kubernetesVersion)
 	}
 
+	// lintignore:SA1019 - necessary due to partial updates
 	d.Partial(false)
 
 	return resourceArmKubernetesClusterRead(d, meta)

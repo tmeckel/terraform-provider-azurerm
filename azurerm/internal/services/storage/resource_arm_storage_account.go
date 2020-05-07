@@ -769,6 +769,7 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 
+	// lintignore:SA1019 - necessary due to partial updates
 	d.Partial(true)
 
 	if d.HasChange("account_replication_type") {
@@ -941,6 +942,7 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 		d.SetPartial("static_website")
 	}
 
+	// lintignore:SA1019 - necessary due to partial updates
 	d.Partial(false)
 	return resourceArmStorageAccountRead(d, meta)
 }

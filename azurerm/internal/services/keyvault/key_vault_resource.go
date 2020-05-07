@@ -350,6 +350,7 @@ func resourceArmKeyVaultUpdate(d *schema.ResourceData, meta interface{}) error {
 	locks.ByName(name, keyVaultResourceName)
 	defer locks.UnlockByName(name, keyVaultResourceName)
 
+	// lintignore:SA1019
 	d.Partial(true)
 
 	// first pull the existing key vault since we need to lock on several bits of it's information
@@ -501,6 +502,7 @@ func resourceArmKeyVaultUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error updating Key Vault %q (Resource Group %q): %+v", name, resourceGroup, err)
 	}
 
+	// lintignore:SA1019
 	d.Partial(false)
 
 	return resourceArmKeyVaultRead(d, meta)

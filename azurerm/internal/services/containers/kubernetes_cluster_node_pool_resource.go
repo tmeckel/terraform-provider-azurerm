@@ -319,6 +319,7 @@ func resourceArmKubernetesClusterNodePoolUpdate(d *schema.ResourceData, meta int
 		return err
 	}
 
+	// lintignore:SA1019 - necessary due to partial updates
 	d.Partial(true)
 
 	log.Printf("[DEBUG] Retrieving existing Node Pool %q (Kubernetes Cluster %q / Resource Group %q)..", id.Name, id.ClusterName, id.ResourceGroup)
@@ -424,6 +425,7 @@ func resourceArmKubernetesClusterNodePoolUpdate(d *schema.ResourceData, meta int
 		return fmt.Errorf("waiting for update of Node Pool %q (Kubernetes Cluster %q / Resource Group %q): %+v", id.Name, id.ClusterName, id.ResourceGroup, err)
 	}
 
+	// lintignore:SA1019 - necessary due to partial updates
 	d.Partial(false)
 
 	return resourceArmKubernetesClusterNodePoolRead(d, meta)
