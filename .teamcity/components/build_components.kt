@@ -57,6 +57,7 @@ fun ParametrizedWithType.ReadOnlySettings() {
 
 fun ParametrizedWithType.TerraformAcceptanceTestsFlag() {
     hiddenVariable("env.TF_ACC", "1", "Set to a value to run the Acceptance Tests")
+    hiddenVariable("env.TF_DISABLE_BINARY_TESTING", "true", "Set to true to disable Binary Testing")
 }
 
 fun ParametrizedWithType.TerraformShouldPanicForSchemaErrors() {
