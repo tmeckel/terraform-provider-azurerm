@@ -1,14 +1,15 @@
 package kusto
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/kusto/mgmt/2019-05-15/kusto"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
@@ -106,7 +107,7 @@ func resourceArmKustoEventHubDataConnection() *schema.Resource {
 				}, false),
 			},
 		},
-		CustomizeDiff: func(d *schema.ResourceDiff, _ interface{}) error {
+		CustomizeDiff: func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
 			_, hasTableName := d.GetOk("table_name")
 			_, hasMappingRuleName := d.GetOk("mapping_rule_name")
 			_, hasDataFormat := d.GetOk("data_format")

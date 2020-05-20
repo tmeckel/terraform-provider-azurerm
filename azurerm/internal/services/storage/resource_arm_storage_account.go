@@ -12,8 +12,8 @@ import (
 	azautorest "github.com/Azure/go-autorest/autorest"
 	"github.com/hashicorp/go-azure-helpers/response"
 	"github.com/hashicorp/go-getter/helper/url"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
@@ -770,7 +770,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	// lintignore:SA1019 - necessary due to partial updates
-	d.Partial(true)
 
 	if d.HasChange("account_replication_type") {
 		sku := storage.Sku{
@@ -785,7 +784,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating Azure Storage Account type %q: %+v", storageAccountName, err)
 		}
 
-		d.SetPartial("account_replication_type")
 	}
 
 	if d.HasChange("access_tier") {
@@ -801,7 +799,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating Azure Storage Account access_tier %q: %+v", storageAccountName, err)
 		}
 
-		d.SetPartial("access_tier")
 	}
 
 	if d.HasChange("tags") {
@@ -815,7 +812,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating Azure Storage Account tags %q: %+v", storageAccountName, err)
 		}
 
-		d.SetPartial("tags")
 	}
 
 	if d.HasChange("custom_domain") {
@@ -843,7 +839,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating Azure Storage Account enable_https_traffic_only %q: %+v", storageAccountName, err)
 		}
 
-		d.SetPartial("enable_https_traffic_only")
 	}
 
 	if d.HasChange("identity") {
@@ -867,7 +862,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating Azure Storage Account network_rules %q: %+v", storageAccountName, err)
 		}
 
-		d.SetPartial("network_rules")
 	}
 
 	if d.HasChange("blob_properties") {
@@ -880,7 +874,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 				return fmt.Errorf("Error updating Azure Storage Account `blob_properties` %q: %+v", storageAccountName, err)
 			}
 
-			d.SetPartial("blob_properties")
 		} else {
 			return fmt.Errorf("`blob_properties` aren't supported for File Storage accounts.")
 		}
@@ -910,7 +903,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating Azure Storage Account `queue_properties` %q: %+v", storageAccountName, err)
 		}
 
-		d.SetPartial("queue_properties")
 	}
 
 	if d.HasChange("static_website") {
@@ -939,11 +931,9 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating Azure Storage Account `static_website` %q: %+v", storageAccountName, err)
 		}
 
-		d.SetPartial("static_website")
 	}
 
 	// lintignore:SA1019 - necessary due to partial updates
-	d.Partial(false)
 	return resourceArmStorageAccountRead(d, meta)
 }
 

@@ -1,6 +1,7 @@
 package frontdoor
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -8,8 +9,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/frontdoor/mgmt/2020-01-01/frontdoor"
 	"github.com/hashicorp/go-azure-helpers/response"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
@@ -475,7 +476,7 @@ func resourceArmFrontDoor() *schema.Resource {
 			"tags": tags.Schema(),
 		},
 
-		CustomizeDiff: func(d *schema.ResourceDiff, v interface{}) error {
+		CustomizeDiff: func(_ context.Context, d *schema.ResourceDiff, v interface{}) error {
 			if err := validate.FrontdoorSettings(d); err != nil {
 				return fmt.Errorf("creating Front Door %q (Resource Group %q): %+v", d.Get("name").(string), d.Get("resource_group_name").(string), err)
 			}

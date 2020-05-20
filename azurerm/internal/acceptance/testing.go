@@ -8,13 +8,11 @@ import (
 
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/hashicorp/go-azure-helpers/authentication"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 var AzureProvider *schema.Provider
-var SupportedProviders map[string]terraform.ResourceProvider
+var SupportedProviders map[string]*schema.Provider
 
 func PreCheck(t *testing.T) {
 	variables := []string{
@@ -50,8 +48,8 @@ func Environment() (*azure.Environment, error) {
 }
 
 func GetAuthConfig(t *testing.T) *authentication.Config {
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Integration test skipped unless env '%s' set", resource.TestEnvVar))
+	if os.Getenv("TF_ACC") == "" {
+		t.Skip(fmt.Sprintf("Integration test skipped unless env '%s' set", "TF_ACC"))
 		return nil
 	}
 

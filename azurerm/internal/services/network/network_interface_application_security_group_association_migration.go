@@ -1,10 +1,11 @@
 package network
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 )
 
@@ -28,7 +29,7 @@ func resourceNetworkInterfaceApplicationSecurityGroupAssociationUpgradeV0Schema(
 	}
 }
 
-func resourceNetworkInterfaceApplicationSecurityGroupAssociationUpgradeV0ToV1(rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+func resourceNetworkInterfaceApplicationSecurityGroupAssociationUpgradeV0ToV1(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
 	// after shipping support for this Resource Azure's since changed the behaviour to require that all IP Configurations
 	// are connected to the same Application Security Group
 	applicationSecurityGroupId := rawState["application_security_group_id"].(string)

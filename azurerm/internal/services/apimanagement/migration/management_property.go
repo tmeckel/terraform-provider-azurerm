@@ -1,11 +1,12 @@
 package migration
 
 import (
+	"context"
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 )
 
@@ -47,7 +48,7 @@ func APIManagementApiPropertyUpgradeV0Schema() *schema.Resource {
 	}
 }
 
-func APIManagementApiPropertyUpgradeV0ToV1(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func APIManagementApiPropertyUpgradeV0ToV1(_ context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	oldId := rawState["id"].(string)
 	newId := strings.Replace(rawState["id"].(string), "/properties/", "/namedValues/", 1)
 

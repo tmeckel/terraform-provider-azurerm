@@ -2,6 +2,7 @@ package compute
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -12,10 +13,10 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/structure"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/hashcode"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/structure"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
@@ -2345,7 +2346,7 @@ func azureRmVirtualMachineScaleSetSuppressRollingUpgradePolicyDiff(k, _, new str
 }
 
 // Make sure rolling_upgrade_policy is default value when upgrade_policy_mode is not Rolling.
-func azureRmVirtualMachineScaleSetCustomizeDiff(d *schema.ResourceDiff, _ interface{}) error {
+func azureRmVirtualMachineScaleSetCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
 	mode := d.Get("upgrade_policy_mode").(string)
 	if strings.ToLower(mode) != "rolling" {
 		if policyRaw, ok := d.GetOk("rolling_upgrade_policy.0"); ok {

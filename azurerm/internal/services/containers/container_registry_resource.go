@@ -1,6 +1,7 @@
 package containers
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -9,8 +10,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/containerregistry/mgmt/2018-09-01/containerregistry"
 	"github.com/hashicorp/go-azure-helpers/response"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
@@ -172,7 +173,7 @@ func resourceArmContainerRegistry() *schema.Resource {
 			"tags": tags.Schema(),
 		},
 
-		CustomizeDiff: func(d *schema.ResourceDiff, v interface{}) error {
+		CustomizeDiff: func(_ context.Context, d *schema.ResourceDiff, v interface{}) error {
 			sku := d.Get("sku").(string)
 			geoReplicationLocations := d.Get("georeplication_locations").(*schema.Set)
 			// if locations have been specified for geo-replication then, the SKU has to be Premium

@@ -1,6 +1,7 @@
 package iothub
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -9,8 +10,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/preview/iothub/mgmt/2018-12-01-preview/devices"
 	"github.com/hashicorp/go-multierror"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
@@ -108,7 +109,7 @@ func resourceArmIotHubSharedAccessPolicy() *schema.Resource {
 	}
 }
 
-func iothubSharedAccessPolicyCustomizeDiff(d *schema.ResourceDiff, _ interface{}) (err error) {
+func iothubSharedAccessPolicyCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) (err error) {
 	registryRead, hasRegistryRead := d.GetOk("registry_read")
 	registryWrite, hasRegistryWrite := d.GetOk("registry_write")
 	serviceConnect, hasServieConnect := d.GetOk("service_connect")

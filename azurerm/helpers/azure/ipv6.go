@@ -3,7 +3,7 @@ package azure
 import (
 	"net"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/hashcode"
 )
 
 // NormalizeIPv6Address returns the normalized notation of an IPv6

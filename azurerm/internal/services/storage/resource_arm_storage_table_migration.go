@@ -1,11 +1,12 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 )
@@ -67,7 +68,7 @@ func ResourceStorageTableStateResourceV0V1() *schema.Resource {
 	}
 }
 
-func ResourceStorageTableStateUpgradeV0ToV1(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func ResourceStorageTableStateUpgradeV0ToV1(_ context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	tableName := rawState["name"].(string)
 	accountName := rawState["storage_account_name"].(string)
 	environment := meta.(*clients.Client).Account.Environment
@@ -80,7 +81,7 @@ func ResourceStorageTableStateUpgradeV0ToV1(rawState map[string]interface{}, met
 	return rawState, nil
 }
 
-func ResourceStorageTableStateUpgradeV1ToV2(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func ResourceStorageTableStateUpgradeV1ToV2(_ context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	tableName := rawState["name"].(string)
 	accountName := rawState["storage_account_name"].(string)
 	environment := meta.(*clients.Client).Account.Environment

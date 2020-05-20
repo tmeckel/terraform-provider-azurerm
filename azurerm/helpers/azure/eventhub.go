@@ -1,12 +1,13 @@
 package azure
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/Azure/azure-sdk-for-go/services/eventhub/mgmt/2017-04-01/eventhub"
 )
@@ -127,7 +128,7 @@ func EventHubAuthorizationRuleSchemaFrom(s map[string]*schema.Schema) map[string
 	return MergeSchema(s, authSchema)
 }
 
-func EventHubAuthorizationRuleCustomizeDiff(d *schema.ResourceDiff, _ interface{}) error {
+func EventHubAuthorizationRuleCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
 	listen, hasListen := d.GetOk("listen")
 	send, hasSend := d.GetOk("send")
 	manage, hasManage := d.GetOk("manage")

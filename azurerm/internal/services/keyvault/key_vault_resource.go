@@ -12,9 +12,9 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/mgmt/2018-02-14/keyvault"
 	"github.com/hashicorp/go-azure-helpers/response"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	uuid "github.com/satori/go.uuid"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/set"
@@ -351,7 +351,6 @@ func resourceArmKeyVaultUpdate(d *schema.ResourceData, meta interface{}) error {
 	defer locks.UnlockByName(name, keyVaultResourceName)
 
 	// lintignore:SA1019
-	d.Partial(true)
 
 	// first pull the existing key vault since we need to lock on several bits of it's information
 	existing, err := client.Get(ctx, resourceGroup, name)
@@ -503,7 +502,6 @@ func resourceArmKeyVaultUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// lintignore:SA1019
-	d.Partial(false)
 
 	return resourceArmKeyVaultRead(d, meta)
 }

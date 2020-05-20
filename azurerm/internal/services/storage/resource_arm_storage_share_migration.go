@@ -1,12 +1,13 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 	"github.com/tombuildsstuff/giovanni/storage/2018-11-09/file/shares"
@@ -42,7 +43,7 @@ func resourceStorageShareStateResourceV0V1() *schema.Resource {
 	}
 }
 
-func ResourceStorageShareStateUpgradeV0ToV1(rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+func ResourceStorageShareStateUpgradeV0ToV1(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
 	shareName := rawState["name"].(string)
 	resourceGroup := rawState["resource_group_name"].(string)
 	accountName := rawState["storage_account_name"].(string)
@@ -55,7 +56,7 @@ func ResourceStorageShareStateUpgradeV0ToV1(rawState map[string]interface{}, _ i
 	return rawState, nil
 }
 
-func ResourceStorageShareStateUpgradeV1ToV2(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func ResourceStorageShareStateUpgradeV1ToV2(_ context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	id := rawState["id"].(string)
 
 	// name/resourceGroup/accountName

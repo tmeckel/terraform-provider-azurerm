@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
@@ -156,7 +156,6 @@ func resourceArmTemplateDeploymentCreateUpdate(d *schema.ResourceData, meta inte
 	deploymentValidateResponse, err := client.Validate(ctx, resourceGroup, name, deployment)
 
 	if !d.IsNewResource() {
-		d.Partial(true)
 	}
 
 	if err != nil {
@@ -171,7 +170,6 @@ func resourceArmTemplateDeploymentCreateUpdate(d *schema.ResourceData, meta inte
 	}
 
 	if !d.IsNewResource() {
-		d.Partial(false)
 	}
 
 	future, err := client.CreateOrUpdate(ctx, resourceGroup, name, deployment)

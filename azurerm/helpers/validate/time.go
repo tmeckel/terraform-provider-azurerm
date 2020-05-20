@@ -7,8 +7,8 @@ import (
 
 	"github.com/Azure/go-autorest/autorest/date"
 	iso8601 "github.com/btubbs/datetime"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func ISO8601Duration(i interface{}, k string) (warnings []string, errors []error) {

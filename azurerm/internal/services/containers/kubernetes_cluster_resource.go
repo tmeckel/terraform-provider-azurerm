@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-02-01/containerservice"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/kubernetes"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
@@ -689,7 +689,6 @@ func resourceArmKubernetesClusterUpdate(d *schema.ResourceData, meta interface{}
 	}
 
 	// lintignore:SA1019 - necessary due to partial updates
-	d.Partial(true)
 
 	// we need to conditionally update the cluster
 	existing, err := clusterClient.Get(ctx, id.ResourceGroup, id.Name)
@@ -906,7 +905,6 @@ func resourceArmKubernetesClusterUpdate(d *schema.ResourceData, meta interface{}
 	}
 
 	// lintignore:SA1019 - necessary due to partial updates
-	d.Partial(false)
 
 	return resourceArmKubernetesClusterRead(d, meta)
 }
