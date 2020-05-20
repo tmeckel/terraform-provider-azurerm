@@ -1,6 +1,7 @@
 package cosmos
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -10,7 +11,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/response"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/terraform-providers/terraform-provider-azuread/azuread/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
@@ -192,12 +192,12 @@ func resourceArmCosmosDbGremlinGraphCreate(d *schema.ResourceData, meta interfac
 				return fmt.Errorf("Error checking for presence of creating Cosmos Gremlin Graph %s (Account: %s, Database: %s): %+v", name, account, database, err)
 			}
 		} else {
-			id, err := azure.CosmosGetIDFromResponse(existing.Response)
+			_, err := azure.CosmosGetIDFromResponse(existing.Response)
 			if err != nil {
 				return fmt.Errorf("Error getting import ID for Cosmos Gremlin Graph '%s' (Account: %s, Database: %s)", name, account, database)
 			}
 
-			return tf.ImportAsExistsError("azurerm_cosmosdb_gremlin_graph", id)
+			return errors.New("already exists")
 		}
 	}
 

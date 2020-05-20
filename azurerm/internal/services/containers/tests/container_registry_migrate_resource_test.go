@@ -37,7 +37,7 @@ func TestAccAzureRMContainerRegistryMigrateState(t *testing.T) {
 		return
 	}
 
-	client.StopContext = acceptance.AzureProvider.StopContext()
+	client.StopContext = context.Background()
 
 	data := acceptance.BuildTestData(t, "azurerm_container_registry", "test")
 	resourceGroupName := fmt.Sprintf("acctestRG%s", data.RandomString)

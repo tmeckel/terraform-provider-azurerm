@@ -34,7 +34,7 @@ func TestAccAzureRMEnsureRequiredResourceProvidersAreRegistered(t *testing.T) {
 	}
 
 	client := armClient.Resource.ProvidersClient
-	ctx := AzureProvider.StopContext()
+	ctx := context.Background()
 	providerList, err := client.List(ctx, nil, "")
 	if err != nil {
 		t.Fatalf("Unable to list provider registration status, it is possible that this is due to invalid "+
